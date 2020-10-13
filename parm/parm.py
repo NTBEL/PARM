@@ -1,7 +1,7 @@
 '''PARM: PAR2 Activation-driven calcium Release Model
 '''
 
-from pysb import Model, Monomer, Parameter, Initial, Rule, Observable
+from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation
 from pysb.macros import bind, bind_complex, catalyze, catalyze_complex
 
 Model()
@@ -38,13 +38,15 @@ Monomer('IP3', ['b'])
 Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
+# FRET reporter TN-XXL
+Monomer('TNXXL', ['bca'])
 
 # Annotations
 # ===========
-Annotate(PAR2, 'https://identifiers.org/uniprot:P55085')
-Annotate(Gaq, 'https://identifiers.org/uniprot:P50148')
-Annotate(PLC, 'https://identifiers.org/uniprot:Q9NQ66')
-Annotate(IP3R, 'https://identifiers.org/uniprot:Q14643')
+Annotation(PAR2, 'https://identifiers.org/uniprot:P55085')
+Annotation(Gaq, 'https://identifiers.org/uniprot:P50148')
+Annotation(PLC, 'https://identifiers.org/uniprot:Q9NQ66')
+Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 
 # Initial conditions
 # ==================
@@ -69,6 +71,9 @@ Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None), IP3R_
 # ER Ca2+ store
 Parameter('Ca_0', 0.07)
 Initial(Ca(loc='E', b=None), Ca_0)
+# TN-XXL
+Parameter('TNXXL_0', 0.08)
+Initial(TNXXL(bca=None), TNXXL_0)
 
 # Kinetic Parameters
 # ==================
@@ -99,6 +104,12 @@ Parameter('kc_tranport_erCa', KC)
 Parameter('kf_cytCa_bind_IP3R', KF)
 Parameter('kr_cytCa_bind_IP3R', KR)
 Parameter('kc_tranport_cytCa', KC)
+# Ca2+ binding to TN-XXL FRET reporter
+#  Kd = 800 nM, https://doi.org/10.1038/nmeth.1243
+Parameter('Kd_cytCa_bind_TNXXL', 800e3)
+Parameter('kf_cytCa_bind_TNXXL', 2)
+Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
+#Parameter('kr_cytCa_bind_TNXXL', )
 
 # Rules
 # =====
@@ -141,6 +152,13 @@ catalyze_complex(IP3R(b1=1, b2=2, b3=3, b4=4) % IP3(b=1) % IP3(b=2)
                  % IP3(b=3) % IP3(b=4), 'bcacyt', Ca(loc='C'), 'b', Ca(loc='E'),
                  (kf_cytCa_bind_IP3R, kr_cytCa_bind_IP3R, kc_tranport_cytCa))
 
+# Binding of Calcium to the TN-XXL FRET reporter
+bind(TNXXL(), 'bca', Ca(loc='C'), 'b',
+     (kf_cytCa_bind_TNXXL,kr_cytCa_bind_TNXXL))
+
 # Observables
 # ===========
-Observable('cytoCa', Ca(loc='C' b=None))
+Observable('iPAR2', PAR2(state='I'))
+Observable('aPAR2', PAR2(state='A'))
+Observable('cytoCa', Ca(loc='C', b=None))
+Observable('FRETGen', TNXXL()%Ca())
