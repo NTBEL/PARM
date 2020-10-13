@@ -39,6 +39,13 @@ Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
 
+# Annotations
+# ===========
+Annotate(PAR2, 'https://identifiers.org/uniprot:P55085')
+Annotate(Gaq, 'https://identifiers.org/uniprot:P50148')
+Annotate(PLC, 'https://identifiers.org/uniprot:Q9NQ66')
+Annotate(IP3R, 'https://identifiers.org/uniprot:Q14643')
+
 # Initial conditions
 # ==================
 # Tyrpsin
@@ -136,4 +143,4 @@ catalyze_complex(IP3R(b1=1, b2=2, b3=3, b4=4) % IP3(b=1) % IP3(b=2)
 
 # Observables
 # ===========
-Observable('cytoCa', Ca(loc='C'))
+Observable('cytoCa', Ca(loc='C' b=None))
