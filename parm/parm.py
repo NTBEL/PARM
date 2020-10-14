@@ -36,8 +36,9 @@ Revelant equations:
 
 '''
 
-from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation
+from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment
 from pysb.macros import bind, bind_complex, catalyze, catalyze_complex
+import numpy as np
 
 Model()
 
@@ -61,16 +62,27 @@ SPC = 0.5
 # Compartments
 # ============
 # Cytosol
-#Compartment('cytosol', dimension=3, size=1.0)
-#  ER membrane
-#Compartment('ER_MEMB', dimension=2, size=1.0, parent=cytosol)
-#  internal ER space
-#Compartment('ER', dimension=3, size=0.25, parent=ER_MEMB)
+# Parameter('SA_CON', 4*np.pi*(6*Vcell/(4*np.pi))**1.5)
+# Compartment('CONTAINER', dimension=2, size=SA_CM)
+# Parameter('V_EXTRA', 2*Vcell)
+# Compartment('EXTRACELLULAR', dimension=3, size=V_C)
+# Parameter('SA_CM', 4*np.pi*(3*Vcell/(4*np.pi))**1.5)
+# Compartment('CELL_MEMB', dimension=2, size=SA_CM)
+# Parameter('V_C', Vcell)
+# Compartment('CYTOSOL', dimension=3, size=V_C)
+# #  ER membrane
+# Parameter('SA_ER', 4*np.pi*(3*Ver/(4*np.pi))**1.5)
+# Compartment('ER_MEMB', dimension=2, size=SA_ER, parent=CELL_MEMB)
+# #  internal ER lumen space
+# Parameter('V_ER', Ver)
+# Compartment('ER_LUMEN', dimension=3, size=V_ER, parent=ER_MEMB)
 
 # Monomers
 # ========
-# Trypsin
-Monomer('Tryp', ['b'])
+# PAR2 agonist 2AT  Note: this was modeled as Trypsin or Tryp in an earlier
+# version of model, but in experiments PAR2 is actually activated by the
+# agonist 2AT, Kang et al. https://doi.org/10.1021/acsnano.9b01993)
+Monomer('TAT', ['b'])
 # PAR2, states: I = inactive (uncleaved), A = active (cleaved)
 Monomer('PAR2', ['b','state'], {'state': ['I','A']})
 # G-alpha_q protein, states: I = inactive, A = active
@@ -97,9 +109,9 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 
 # Initial conditions
 # ==================
-# Tyrpsin
-Parameter('Tryp_0', SPC)
-Initial(Tryp(b=None), Tryp_0)
+# PAR2 agonist 2AT, Kang et al. https://doi.org/10.1021/acsnano.9b01993
+Parameter('TAT_0', 330e-3)
+Initial(TAT(b=None), TAT_0)
 # inactive PAR2
 Parameter('PAR2_0', SPC)
 Initial(PAR2(state='I', b=None), PAR2_0)
@@ -127,9 +139,11 @@ Initial(TNXXL(bca=None), TNXXL_0)
 
 # Kinetic Parameters
 # ==================
-# PAR2 activation/cleavage by Trypsin
-Parameter('kf_PAR2_bind_Tryp', KF)
-Parameter('kr_PAR2_bind_Tryp', KR)
+# PAR2 activation by 2AT
+# Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
+# has EC50 = 101.7 +- 28.7 nM, Kang et al. https://doi.org/10.1021/acsnano.9b01993
+Parameter('kf_PAR2_bind_TAT', KF)
+Parameter('kr_PAR2_bind_TAT', KR)
 Parameter('kcat_activate_PAR2', KCAT)
 # Gaq activation by activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF)
@@ -165,10 +179,10 @@ Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
 
 # Rules
 # =====
-# PAR2 activation/cleavage by Trypsin:
-#    Tryp + PAR2_I <---> Tryp:PAR2_I ---> Tryp + PAR2_A
-catalyze(Tryp(), 'b', PAR2(state='I'), 'b', PAR2(state='A'),
-         (kf_PAR2_bind_Tryp,kr_PAR2_bind_Tryp, kcat_activate_PAR2))
+# PAR2 activation by 2AT:
+#    2AT + PAR2_I <---> TAT:PAR2_I ---> TAT + PAR2_A
+catalyze(TAT(), 'b', PAR2(state='I'), 'b', PAR2(state='A'),
+         (kf_PAR2_bind_TAT,kr_PAR2_bind_TAT, kcat_activate_PAR2))
 # Gaq activation by activated-PAR2:
 #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
 catalyze(PAR2(state='A'), 'b', Gaq(state='I'), 'b', Gaq(state='A'),
