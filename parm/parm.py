@@ -1,16 +1,16 @@
 '''PARM: PAR2 Activation-driven calcium Release Model
 
 Unless otherwise noted the units used are:
-    Volume : micron^3
-    Area: micron^2
-    Distance: micron
-    Volume Concentration: microM
-    Area Concentration: mol/micron^2
-    Forward bimolecular association rate constants (kf) : 1/(s*microM)
+    Volume : L
+    Area: L^(2/3)
+    Distance: L^(1/3)
+    Volume Concentration: molec (M*N_A*V) - molec is short for molecules
+    Area Concentration: molec
+    Forward bimolecular association rate constants (kf) : 1/(s*(molec))
     Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
     Catalytic rate constants (kcat) :  1/s
-    Dissociation (bimolecular) constants: Kd : microM
-    Binding (bimolecular) constants : Kb : 1/microM
+    Dissociation (bimolecular) constants: Kd : molec
+    Binding (bimolecular) constants : Kb : 1/(molec)
 
 
 Revelant equations:
@@ -45,23 +45,34 @@ import numpy as np
 
 Model()
 
-# Cellular volume, value (10^-12 L) as assumed in
+# Cellular volume, 10^-12 L as assumed in
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
-Vcell = 10.
+Vcell = 1.e-12
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Aleberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
 # but for simplicity we will assume it is 10% of cell volume.
 Ver = Vcell * 0.1
+
+# Avogadro's number
+N_A = 6.02214e23 # molec/mol
+
+# Conversion factors for concentration units.
+# microMolar to molec
+microM_to_molec = 1e-6*N_A*Vcell
+# nanoMolar to molec
+nM_to_molec = 1e-9*N_A*Vcell
+
 # Default forward, reverse, and catalytic rates:
-KF = 1e-1 #
+KF = 1e-1/microM_to_molec #
 KR = 1e-3 # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
 
 # Default signaling protein concentration, which is midway between
 # the 1 nM to 1 microM range assumed by Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 # for which they reference Wu and Pollard https://doi.org/10.1126/science.1113230
-SPC = 0.5
-#SPC = 10
+# Midpoint is 0.5 microM.
+SPC = 0.5*microM_to_molec
+
 # As a first estimate for the forward binding reactions of Ca2+ we will assume
 # that it is diffusion-controlled following Smoluchowski eqn.:
 #     kf = 4*pi*D*R_o
@@ -69,30 +80,29 @@ SPC = 0.5
 # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
 D_Ca = 5.3e-6 # cm^2/s
 R_o = 2e-7 # cm
-# Avogadro's number
-N_A = 6.022e23 # things/mol
-# Multiplying by Avogadro's number converts molecular units into moles.
-# (1e-9) term is for unit conversion from cm^3/s*mol -> mL/s*mol -> 10^-3 L/s*mol -> 10^-3 1/s*M -> 10^-9 1/s*microM
-K_CA_BIND = 4*np.pi*D_Ca*R_o*N_A*(1e-9)  # 1/s*microM
+# (1e-3) term is for unit conversion from cm^3/s*molec to 1/s*(molec/L)
+# mL/s*molec -> 10^-3 L/s*molec and dividing by Vcell converts to 1/(s*molec)
+K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/Vcell
 
 # Compartments
 # ============
-# Cytosol
-# Parameter('SA_CON', 4*np.pi*(6*Vcell/(4*np.pi))**1.5)
-# Compartment('CONTAINER', dimension=2, size=SA_CM)
-# Assume extracellular volume is spherical with radius twice that of the
-# cell volume (hence the factor of 8 time the cell volume)
-Parameter('V_EXTRA', 2*Vcell)
+# Since we have already converted initial concentrations into molec units
+# we need to scale the volumes used by compartments by Vcell.
+# Assume extracellular volume is spherical with volume twice that of the
+# cell volume.
+Parameter('V_EXTRA', 2)
 Compartment('EXTRACELLULAR', dimension=3, size=V_EXTRA)
-Parameter('SA_CM', 4*np.pi*(3*Vcell/(4*np.pi))**1.5)
+# Cell Membrane
+Parameter('SA_CM', 4*np.pi*(3/(4*np.pi))**1.5)
 Compartment('CELL_MEMB', dimension=2, size=SA_CM, parent=EXTRACELLULAR)
-Parameter('V_C', Vcell)
+# Cytosol
+Parameter('V_C', 1)
 Compartment('CYTOSOL', dimension=3, size=V_C, parent=CELL_MEMB)
 #  ER membrane
-Parameter('SA_ER', 4*np.pi*(3*Ver/(4*np.pi))**1.5)
+Parameter('SA_ER', 4*np.pi*(3*Ver/(Vcell*4*np.pi))**1.5)
 Compartment('ER_MEMB', dimension=2, size=SA_ER, parent=CYTOSOL)
 #  internal ER lumen space
-Parameter('V_ER', Ver)
+Parameter('V_ER', Ver/Vcell)
 Compartment('ER_LUMEN', dimension=3, size=V_ER, parent=ER_MEMB)
 
 # Monomers
@@ -130,7 +140,7 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 # Initial conditions
 # ==================
 # PAR2 agonist 2AT, 330 nM from Kang et al. https://doi.org/10.1021/acsnano.9b01993
-Parameter('TAT_0', 330e-3)
+Parameter('TAT_0', 330*nM_to_molec)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
 Parameter('PAR2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
@@ -151,7 +161,7 @@ Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None)**ER_ME
 # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
 # around 525 microM as reported in
 # Foyouzi-Youssefi et al. https://doi.org/10.1073/pnas.97.11.5723 (Fig. 3C, control)
-Parameter('Ca_0', 525)
+Parameter('Ca_0', 525*microM_to_molec)
 Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 #Parameter('Ca_C_0', 10)
 #Initial(Ca(loc='C', b=None)**CYTOSOL, Ca_C_0)
@@ -196,7 +206,7 @@ Parameter('kr_cytCa_bind_IP3R', KR)
 Parameter('kcat_tranport_cytCa', KCAT/100.)
 # Ca2+ binding to TN-XXL FRET reporter
 #  Kd = 800 nM, https://doi.org/10.1038/nmeth.1243
-Parameter('Kd_cytCa_bind_TNXXL', 800e-3)
+Parameter('Kd_cytCa_bind_TNXXL', 800*nM_to_molec)
 Parameter('kf_cytCa_bind_TNXXL', K_CA_BIND)
 Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
 #Parameter('kr_cytCa_bind_TNXXL', )
