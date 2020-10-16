@@ -40,7 +40,7 @@ Revelant equations:
 '''
 
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
-from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze_state
+from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze_state, degrade
 import numpy as np
 
 Model()
@@ -133,7 +133,7 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 Parameter('TAT_0', 330e-3)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
-Parameter('PAR2_0', SPC*V_C.value/(SA_CM.value*100)) # Had to convert to area concentration.
+Parameter('PAR2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
 Initial(PAR2(state='I', b=None)**CELL_MEMB, PAR2_0)
 # inactive Gaq
 Parameter('Gaq_0', SPC)
@@ -156,7 +156,7 @@ Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 #Parameter('Ca_C_0', 10)
 #Initial(Ca(loc='C', b=None)**CYTOSOL, Ca_C_0)
 # TN-XXL
-Parameter('TNXXL_0', 0.08)
+Parameter('TNXXL_0', SPC)
 Initial(TNXXL(bca=None)**CYTOSOL, TNXXL_0)
 
 # Kinetic Parameters
@@ -200,6 +200,8 @@ Parameter('Kd_cytCa_bind_TNXXL', 800e-3)
 Parameter('kf_cytCa_bind_TNXXL', K_CA_BIND)
 Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
 #Parameter('kr_cytCa_bind_TNXXL', )
+# Depletion of Cytosolic Ca2+
+#Parameter('kdeg_cytCa', KCAT*1e-12) # 1/s
 
 # Rules
 # =====
@@ -296,6 +298,11 @@ Rule('transport_Ca_CYTO_ER',
 # Binding of Calcium to the TN-XXL FRET reporter
 bind(TNXXL(bca=None)**CYTOSOL, 'bca', Ca(loc='E',b=None)**CYTOSOL, 'b',
      (kf_cytCa_bind_TNXXL,kr_cytCa_bind_TNXXL))
+
+
+# Degradation of Cytosolic Ca2+ -- added to help fit decay of FRET signal
+# but it didn't really seem to help and made it worse.
+#degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 
 # Observables
 # ===========
