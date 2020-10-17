@@ -12,31 +12,28 @@ Unless otherwise noted the units used are:
     Dissociation (bimolecular) constants: Kd : molec
     Binding (bimolecular) constants : Kb : 1/(molec)
 
+The interactions and sequence of rules included in the model:
 
-Revelant equations:
-    Relationship of equilibrium dissociation constant and bimolecular association
-    rate constants:
-        Kd = kr/kf
-    Relationship of equilibrium binding constant and bimolecular association
-    rate constants:
-        Kb = kf/kr
-    Relationship of equilibrium binding and dissociation constants for bimolecular
-    association:
-        Kb = 1/Kd
-    Diffusion-controlled rate for bimolecular reaction
-    (Smoluchowski's diffusion controlled encounter):
-        kf = 4*pi*D*R_o,
-            D = D_1 + D_2 is the apparent diffusion coefficient,
-            R_o = R_1 + R_2 is the interaction radius.
-    Catalytic efficiency for Michaelis-Menten kinetics:
-        keff = kcat/Km,
-            Km is the Michaelis constant which is
-                Km = (kcat + kr)/kf,
-            and can be approximately equal to the ES dissociation constant (Kd)
-            when kcat << kr.
-
-
-
+  1. PAR2 activation by 2AT:
+      2AT + PAR2_I <---> TAT:PAR2_I ---> TAT + PAR2_A
+  2. Gaq activation by activated-PAR2:  | Gaq is not pre-assembled on PAR2.
+      PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
+  3. PLC activation by binding Gaq:
+      Gaq_A + PLC <---> Gaq_A:PLC
+  4. Conversion of PIP2 to IP3
+      Gaq_A:PLC + PIP2 <---> Gaq_A:PLC:PIP2 ---> Gaq_A:PLC + IP3
+  5. Binding of IP3 to IP3R:  | IP3R is only activated when all 4 subunits are bound.
+     i) IP3R + IP3 <---> IP3R:IP3, subunit 1
+    ii) IP3R + IP3 <---> IP3R:IP3, subunit 2
+   iii) IP3R + IP3 <---> IP3R:IP3, subunit 3
+    iv) IP3R + IP3 <---> IP3R:IP3, subunit 4
+  6. Transport of Ca2+ by activated IP3R
+    i) ER to cytosol:
+       IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
+   ii) Reverse, cytosol to ER:  | Assuming the transport is not just one way.
+       IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
+  7. Binding of Calcium to the TN-XXL FRET reporter:
+       TNXXL + Ca <---> TNXXL:Ca
 '''
 
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
@@ -306,6 +303,7 @@ Rule('transport_Ca_CYTO_ER',
 
 
 # Binding of Calcium to the TN-XXL FRET reporter
+#  TNXXL + Ca <---> TNXXL:Ca
 bind(TNXXL(bca=None)**CYTOSOL, 'bca', Ca(loc='E',b=None)**CYTOSOL, 'b',
      (kf_cytCa_bind_TNXXL,kr_cytCa_bind_TNXXL))
 
