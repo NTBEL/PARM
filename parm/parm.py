@@ -67,6 +67,7 @@ KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002
 # Default signaling protein concentration, which is midway between
 # the 1 nM to 1 microM range assumed by Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 # for which they reference Wu and Pollard https://doi.org/10.1126/science.1113230
+# Also see Aldridge et al. https://doi.org/10.1038/ncb1497
 # Midpoint is 0.5 microM.
 SPC = 0.5*microM_to_molec
 
