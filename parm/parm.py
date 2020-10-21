@@ -1,22 +1,28 @@
 '''PARM: PAR2 Activation-driven calcium Release Model
 
-Unless otherwise noted the units used are:
-    Volume : L
-    Area: L^(2/3)
-    Distance: L^(1/3)
-    Volume Concentration: molec (M*N_A*V) - molec is short for molecules
-    Area Concentration: molec
-    Forward bimolecular association rate constants (kf) : 1/(s*(molec))
-    Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
-    Catalytic rate constants (kcat) :  1/s
-    Dissociation (bimolecular) constants: Kd : molec
-    Binding (bimolecular) constants : Kb : 1/(molec)
+PARM is a mechanistic mass action model of PAR2 activation and downstream
+calcium signaling via the phospholipase C and IP3 pathway. The model was
+designed to mathematically model the underlying signaling dynamics
+relevant to the inactivation of PAR2 by Molecular Hyperthermia as
+described in:
+Kang et al.,  Transient Photoinactivation of Cell Membrane Protein Activity
+without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
+12487–12499 https://doi.org/10.1021/acsnano.9b01993
 
-The interactions and sequence of rules included in the model:
+The model explicitly includes the interaction of cytosolic Ca2+ with the
+genetically encoded FRET sensor TN-XXL. It does not presume that the G-protein,
+G_alphaq (or Gaq), is pre-assembled on PAR2 and makes the approximation that
+G_alphaq is free in cytosol but must bind activated-PAR2 before becoming
+activated itself. The model also assumes that all four subunits of the IP3
+receptor, IP3R, must be bound by IP3 before calcium can bind the receptor and
+be translocated between the ER lumen and cytosol.
+
+The full set of interactions and sequence of rules included in the model are as
+follows:
 
   1. PAR2 activation by 2AT:
       2AT + PAR2_I <---> TAT:PAR2_I ---> TAT + PAR2_A
-  2. Gaq activation by activated-PAR2:  | Gaq is not pre-assembled on PAR2.
+  2. Gaq activation by activated-PAR2:  | Note: Gaq is not pre-assembled on PAR2.
       PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
   3. PLC activation by binding Gaq:
       Gaq_A + PLC <---> Gaq_A:PLC
@@ -36,6 +42,19 @@ The interactions and sequence of rules included in the model:
        TNXXL + Ca <---> TNXXL:Ca
   8. Degradation of Cytosolic Calcium
        Ca_C ---> None
+
+Unless otherwise noted the units used are:
+    Volume : L
+    Area: L^(2/3)
+    Distance: L^(1/3)
+    Volume Concentration: molec (M*N_A*V) - molec is short for molecules
+    Area Concentration: molec
+    Forward bimolecular association rate constants (kf) : 1/(s*(molec))
+    Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
+    Catalytic rate constants (kcat) :  1/s
+    Other unimolecular rate constants: 1/s
+    Dissociation (bimolecular) constants: Kd : molec
+    Binding (bimolecular) constants : Kb : 1/(molec)
 '''
 
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
@@ -317,7 +336,7 @@ bind(TNXXL(bca=None)**CYTOSOL, 'bca', Ca(loc='E',b=None)**CYTOSOL, 'b',
 # cytosol after the ER store is released (e.g., activation of
 # SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
 # channels to release excess Ca2+ into the extracellular space).
-degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa) 
+degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 
 # Observables
 # ===========
