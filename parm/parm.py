@@ -34,6 +34,8 @@ The interactions and sequence of rules included in the model:
        IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
   7. Binding of Calcium to the TN-XXL FRET reporter:
        TNXXL + Ca <---> TNXXL:Ca
+  8. Degradation of Cytosolic Calcium
+       Ca_C ---> None
 '''
 
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
@@ -209,7 +211,7 @@ Parameter('kf_cytCa_bind_TNXXL', K_CA_BIND)
 Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
 #Parameter('kr_cytCa_bind_TNXXL', )
 # Depletion of Cytosolic Ca2+
-#Parameter('kdeg_cytCa', KCAT*1e-12) # 1/s
+Parameter('kdeg_cytCa', 0.1) # 1/s
 
 # Rules
 # =====
@@ -309,9 +311,13 @@ bind(TNXXL(bca=None)**CYTOSOL, 'bca', Ca(loc='E',b=None)**CYTOSOL, 'b',
      (kf_cytCa_bind_TNXXL,kr_cytCa_bind_TNXXL))
 
 
-# Degradation of Cytosolic Ca2+ -- added to help fit decay of FRET signal
-# but it didn't really seem to help and made it worse.
-#degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
+# Degradation of Cytosolic Ca2+ --
+# This term was added to help fit the decay of FRET signal, presumably
+# representing a lumped process for the regulation of Ca2+ concentration in the
+# cytosol after the ER store is released (e.g., activation of
+# SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
+# channels to release excess Ca2+ into the extracellular space).
+degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa) 
 
 # Observables
 # ===========
