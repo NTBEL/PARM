@@ -348,5 +348,8 @@ Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Get the FRET signal
 Observable('fret_complex', TNXXL(bca=1)**CYTOSOL % Ca(b=1,loc='E')**CYTOSOL)
-Expression('FRET', fret_complex/TNXXL_0)
+# The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
+# see Fig S1 C https://doi.org/10.1038/nmeth.1243
+Parameter('max_FRET_ratio', 2.3)
+Expression('FRET', max_FRET_ratio*fret_complex/TNXXL_0)
 #Observable('FRET', fret_signal)

@@ -28,7 +28,7 @@ follows:
      ii) Release of activated-Gaq from PAR2:
          PAR2_A:Gaq_A ---> PAR2_A + Gaq_A
     iii) Translocation of free activated-Gaq from the cell membrane to the cytosol:
-         Gaq_A@CM ---> Gaq_A@CYTOSOL 
+         Gaq_A@CM ---> Gaq_A@CYTOSOL
   3. PLC activation by binding Gaq:
       Gaq_A + PLC <---> Gaq_A:PLC
   4. Conversion of PIP2 to IP3
@@ -364,5 +364,8 @@ Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Get the FRET signal
 Observable('fret_complex', TNXXL(bca=1)**CYTOSOL % Ca(b=1,loc='E')**CYTOSOL)
-Expression('FRET', fret_complex/TNXXL_0)
+# The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
+# see Fig S1 C https://doi.org/10.1038/nmeth.1243
+Parameter('max_FRET_ratio', 2.3)
+Expression('FRET', max_FRET_ratio*fret_complex/TNXXL_0)
 #Observable('FRET', fret_signal)
