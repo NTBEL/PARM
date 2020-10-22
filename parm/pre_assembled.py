@@ -175,11 +175,11 @@ Initial(PAR2(state='I', bgaq=1, btat=None)**CELL_MEMB % Gaq(state='I', b=1)**CEL
 #Parameter('Gaq_0', SPC)
 #Initial(Gaq(state='I', b=None)**CYTOSOL, Gaq_0)
 # inactive PLC
-Parameter('PLC_0', SPC)
-Initial(PLC(bgaq=None, bpip2=None)**CYTOSOL, PLC_0)
+Parameter('PLC_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
+Initial(PLC(bgaq=None, bpip2=None)**CELL_MEMB, PLC_0)
 # PIP2
-Parameter('PIP2_0', SPC)
-Initial(PIP2(b=None)**CYTOSOL, PIP2_0)
+Parameter('PIP2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
+Initial(PIP2(b=None)**CELL_MEMB, PIP2_0)
 # IP3R
 Parameter('IP3R_0', SPC*V_ER.value/SA_ER.value) # Had to convert to area concentration.
 Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None)**ER_MEMB, IP3R_0)
@@ -260,10 +260,10 @@ Rule('gaq_transport', Gaq(b=None, state='A')**CELL_MEMB >> Gaq(b=None, state='A'
 
 # PLC activation by binding Gaq:
 #    Gaq_A + PLC <---> Gaq_A:PLC
-bind(Gaq(state='A')**CYTOSOL, 'b', PLC()**CYTOSOL, 'bgaq', [kf_PLC_bind_Gaq,kr_PLC_bind_Gaq])
+bind(Gaq(state='A')**CYTOSOL, 'b', PLC()**CELL_MEMB, 'bgaq', [kf_PLC_bind_Gaq,kr_PLC_bind_Gaq])
 # Conversion of PIP2 to IP3
 #    Gaq_A:PLC + PIP2 <---> Gaq_A:PLC:PIP2 ---> Gaq_A:PLC + IP3
-catalyze_complex(PLC(bgaq=1)**CYTOSOL % Gaq(b=1, state='A')**CYTOSOL, 'bpip2', PIP2()**CYTOSOL, 'b', IP3(b=None)**CYTOSOL,
+catalyze_complex(PLC(bgaq=1)**CELL_MEMB % Gaq(b=1, state='A')**CYTOSOL, 'bpip2', PIP2()**CELL_MEMB, 'b', IP3(b=None)**CYTOSOL,
                  [kf_PLC_bind_PIP2,kr_PLC_bind_PIP2,kcat_PIP2_to_IP3])
 # Binding of IP3 to IP3R - IP3R is activated when all 4 subunits are bound
 #   IP3R + IP3 <---> IP3R:IP3, subunit 1
