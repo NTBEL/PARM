@@ -158,8 +158,13 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 
 # Initial conditions
 # ==================
-# PAR2 agonist 2AT, 330 nM from Kang et al. https://doi.org/10.1021/acsnano.9b01993
-Parameter('TAT_0', 330*nM_to_molec)
+# PAR2 agonist 2AT, 330 nM for Fig 2D data from Kang et al. https://doi.org/10.1021/acsnano.9b01993
+C_2AT = 330 # nM
+V_2AT = 50e-6 # Volume of agonist added to wells is 50 microL
+Vwell = 150e-6 # Looks like the total well volume was 150 microL (100 microL ACSF + 50 microL agonist in ACSF)
+nM_2AT_to_molec = 1e-9 * V_2AT * N_A * (Vcell/Vwell)
+#nM_2AT_to_molec = 1e-9 * V_2AT * N_A
+Parameter('TAT_0', C_2AT*nM_2AT_to_molec)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
 Parameter('PAR2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
