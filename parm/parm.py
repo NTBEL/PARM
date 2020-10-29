@@ -81,7 +81,7 @@ microM_to_molec = 1e-6*N_A*Vcell
 nM_to_molec = 1e-9*N_A*Vcell
 
 # Default forward, reverse, and catalytic rates:
-KF = 1e-1/microM_to_molec #
+KF = 1e-6 # 1/(molec*s) Default forward rate from Aldridge et al. https://doi.org/10.1038/ncb1497
 KR = 1e-3 # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
 
@@ -102,6 +102,13 @@ R_o = 2e-7 # cm
 # (1e-3) term is for unit conversion from cm^3/s*molec to 1/s*(molec/L)
 # mL/s*molec -> 10^-3 L/s*molec and dividing by Vcell converts to 1/(s*molec)
 K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/Vcell
+
+# Ion channel transport rate: up to 1e8 ions/s https://www.ncbi.nlm.nih.gov/books/NBK26910/
+K_ION_CHANNEL = 1e8
+
+# IP3 diffuses in mammalian at <= 10 micrometer^2/s https://dx.doi.org/10.1126%2Fscisignal.aag1625
+D_ip3 = 10e-8 # cm^2/s
+K_IP3_BIND = 4*np.pi*D_ip3*R_o*(1e-3)/Vcell
 
 # Compartments
 # ============
@@ -190,7 +197,7 @@ Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 #Parameter('Ca_C_0', 10)
 #Initial(Ca(loc='C', b=None)**CYTOSOL, Ca_C_0)
 # TN-XXL
-Parameter('TNXXL_0', SPC)
+Parameter('TNXXL_0', 1e-3*microM_to_molec)
 Initial(TNXXL(bca=None)**CYTOSOL, TNXXL_0)
 
 # Kinetic Parameters
@@ -204,7 +211,9 @@ Parameter('kcat_activate_PAR2', KCAT)
 # Gaq activation by activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF)
 Parameter('kr_PAR2_bind_Gaq', KR)
-Parameter('kcat_activate_Gaq', KCAT)
+# Since Gaq activation here is a coarse graining of several steps
+# 0.1 1/s is probably more reasonable.
+Parameter('kcat_activate_Gaq', 0.1)
 # PLC binding Gaq
 Parameter('kf_PLC_bind_Gaq', KF)
 Parameter('kr_PLC_bind_Gaq', KR)
@@ -213,21 +222,21 @@ Parameter('kf_PLC_bind_PIP2', KF)
 Parameter('kr_PLC_bind_PIP2', KR)
 Parameter('kcat_PIP2_to_IP3', KCAT)
 # Binding of IP3 to IP3R
-Parameter('kf_IP3_bind_IP3R', KF*100)
-Parameter('kr_IP3_bind_IP3R', KR/10)
+Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
+Parameter('kr_IP3_bind_IP3R', KR)
 # Transport of Ca2+
 #  ER -> cytosol:
 Parameter('kf_erCa_bind_IP3R', K_CA_BIND)
 Parameter('kr_erCa_bind_IP3R', KR)
 #Parameter('kf_erCa_bind_IP3R', KF)
 #Parameter('kr_erCa_bind_IP3R', KR)
-Parameter('kcat_tranport_erCa', KCAT/10)
+Parameter('kcat_tranport_erCa', K_ION_CHANNEL)
 #  cytosol -> ER:
 Parameter('kf_cytCa_bind_IP3R', K_CA_BIND)
 Parameter('kr_cytCa_bind_IP3R', KR)
 #Parameter('kf_cytCa_bind_IP3R', KF/10)
 #Parameter('kr_cytCa_bind_IP3R', KR*10)
-Parameter('kcat_tranport_cytCa', KCAT/100.)
+Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 # Ca2+ binding to TN-XXL FRET reporter
 #  Kd = 800 nM, https://doi.org/10.1038/nmeth.1243
 Parameter('Kd_cytCa_bind_TNXXL', 800*nM_to_molec)
@@ -235,7 +244,7 @@ Parameter('kf_cytCa_bind_TNXXL', K_CA_BIND)
 Expression('kr_cytCa_bind_TNXXL', kf_cytCa_bind_TNXXL*Kd_cytCa_bind_TNXXL)
 #Parameter('kr_cytCa_bind_TNXXL', )
 # Depletion of Cytosolic Ca2+
-Parameter('kdeg_cytCa', 0.1) # 1/s
+Parameter('kdeg_cytCa', 1) # 1/s
 
 # Rules
 # =====
