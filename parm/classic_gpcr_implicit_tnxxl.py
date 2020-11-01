@@ -9,14 +9,12 @@ Kang et al.,  Transient Photoinactivation of Cell Membrane Protein Activity
 without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
 12487–12499 https://doi.org/10.1021/acsnano.9b01993
 
-The FRET ratio for cytosolic Ca2+ is estimated by using the Hill equation with
-parameters from the dose-repsonse curve of TN-XXL to Ca2+. PAR2 activation and
-subsequent G-protein activation are modeled after the Classical GPCR/G-protein
-activation model (e.g., see Fig 2A of Oliveira et al.
-https://doi.org/10.3389/fnagi.2019.00089). The model also
-assumes that all four subunits of the IP3 receptor, IP3R, must be bound by IP3
-before calcium can bind the receptor and be translocated between the ER lumen
-and cytosol which is consistent with work by Alzayady et al
+PAR2 activation and subsequent G-protein activation are modeled after the
+Classical GPCR/G-protein activation model (e.g., see Fig 2A of Oliveira et al.
+https://doi.org/10.3389/fnagi.2019.00089). The model also assumes that all four
+subunits of the IP3 receptor, IP3R, must be bound by IP3 before calcium can
+bind the receptor and be translocated between the ER lumen and cytosol which is
+consistent with work by Alzayady et al
 https://doi.org/10.1126/scisignal.aad6281. However,  feedback to either reduce
 or enhance the IP3R calcium release is not included. Additionally, the
 cytosolic calcium level maintenance is modeled by a unidirectional degradation
@@ -24,7 +22,14 @@ step that is active when the cytosolic calcium concentration goes  above the
 starting value, approximating a lumped process for the regulation of Ca2+
 concentration in the cytosol after the ER store is released (e.g., activation
 of SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
-channels to release excess Ca2+ into the extracellular space).
+channels to release excess Ca2+ into the extracellular space). However, the
+initial cytosolic concentration of Ca2+ is left at zero for puposes of the
+differential equations in order to avoid having to define piecewise functions
+for cytosolic calcium regulation, but the ctyosol is implicity assumed to have
+a  baseline constant concentration of Ca2+ (nominally 100 nM) which is included
+when computing the FRET ratio. Spefically, in this version of the model the
+FRET ratio for cytosolic Ca2+ is estimated by using the Hill equation with
+parameters from the dose-repsonse curve of TN-XXL to Ca2+.
 
 The full set of interactions and sequence of rules included in the model are as
 follows:
@@ -43,9 +48,9 @@ follows:
       v) Gaq:GTP dissociates from PAR2 (G protein dissociation from the receptor):
          PAR2_A:Gaq:GTP ---> PAR2_A + Gaq:GTP
   3. Hydrolosis of GTP by Gaq
-       a) Slow autocatalysis by Gaq
+       a) Slow hydrolosis by Gaq alone
            Gaq:GTP ---> Gaq:GDP
-       b) RGS enhanced catalysis
+       b) RGS enhanced hydrolosis
            Gaq:GTP + RGS <---> Gaq:GTP:RGS ---> Gaq:GDP + RGS
   4. Recombination of G protein heterotrimer
     Gaq:GDP + Gbg ---> Gaq:GDP:Gbq
@@ -63,8 +68,10 @@ follows:
        IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
    ii) Reverse, cytosol to ER:  | Assuming the transport is not just one way.
        IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
-  9. Degradation of Cytosolic Calcium (only when cytosolic Ca goes above its starting concentraton)
+  9. Degradation of Cytosolic Calcium
        Ca_C ---> None,  if Ca_C > Ca_C_0
+  10. Degradation of IP3
+       IP3 ---> None
 
 
 Unless otherwise noted the units used are:

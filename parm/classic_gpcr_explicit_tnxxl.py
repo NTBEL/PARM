@@ -12,10 +12,9 @@ without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
  PAR2 activation and subsequent G-protein activation are modeled after the
  Classical GPCR/G-protein activation model (e.g., see Fig 2A of Oliveira et al.
  https://doi.org/10.3389/fnagi.2019.00089). In this model the initial cytosolic
- calcium is set to zero (somewhat reasonable as the resting cytosolic calcium
- level is on ~100 nM), so only calcium released from the ER is registered by
+ calcium is set to zero, so only calcium released from the ER is registered by
  the FRET calcium sensor TN-XXL. The interaction between Ca2+ and TN-XXL is
- explicitly included as a binding reaction with with the effective Kd from the
+ explicitly included as a binding reaction with the effective Kd from the
  dose-repsonse curve of TN-XXL to Ca2+. The FRET ratio for cytosolic Ca2+ is
  therefore estimated as the fraction of occupied TN-XXL molecules multiplied by
  the maximum FRET ratio. The model also assumes that all four subunits of the
@@ -47,9 +46,9 @@ follows:
       v) Gaq:GTP dissociates from PAR2 (G protein dissociation from the receptor):
          PAR2_A:Gaq:GTP ---> PAR2_A + Gaq:GTP
   3. Hydrolosis of GTP by Gaq
-       a) Slow autocatalysis by Gaq
+       a) Slow hydrolosis by Gaq alone
            Gaq:GTP ---> Gaq:GDP
-       b) RGS enhanced catalysis
+       b) RGS enhanced hydrolosis
            Gaq:GTP + RGS <---> Gaq:GTP:RGS ---> Gaq:GDP + RGS
   4. Recombination of G protein heterotrimer
     Gaq:GDP + Gbg ---> Gaq:GDP:Gbq
@@ -69,7 +68,7 @@ follows:
        IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
   9. Binding of Calcium to the TN-XXL FRET reporter:
        TNXXL + Ca <---> TNXXL:Ca
-  10. Degradation of Cytosolic Calcium (only when cytosolic Ca goes above its starting concentraton)
+  10. Degradation of Cytosolic Calcium
        Ca_C ---> None,  if Ca_C > Ca_C_0
   11. Degradation of IP3
        IP3 ---> None
