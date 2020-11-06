@@ -79,7 +79,7 @@ Unless otherwise noted the units used are:
     Area: L^(2/3)
     Distance: L^(1/3)
     Volume Concentration: molec (M*N_A*V) - molec is short for molecules
-    Area Concentration: molec
+    Area Concentration: molec/scaled-area (M*N_A/4*pi*R^2, where R = (3*V/(Vcell*4*pi))**(1/3) and V is volume of the inner 3d compartment)
     Forward bimolecular association rate constants (kf) : 1/(s*(molec))
     Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
     Catalytic rate constants (kcat) :  1/s
@@ -98,11 +98,11 @@ Model()
 
 # Cellular volume, 10^-12 L as assumed in
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
-Vcell = 1.e-12
+Vcell = 1.e-12 # L
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Aleberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
 # but for simplicity we will assume it is 10% of cell volume.
-Ver = Vcell * 0.1
+Ver = Vcell * 0.1 # L
 
 # Avogadro's number
 N_A = 6.02214e23 # molec/mol
@@ -142,6 +142,12 @@ K_ION_CHANNEL = 1e8
 # IP3 diffuses in mammalian at <= 10 micrometer^2/s https://dx.doi.org/10.1126%2Fscisignal.aag1625
 D_ip3 = 10e-8 # cm^2/s
 K_IP3_BIND = 4*np.pi*D_ip3*R_o*(1e-3)/Vcell
+
+# Default molecule degradation rate.
+K_DEGRADE = 1 # 1/s
+
+# Default unidirection conversion rate.
+K_CONVERT = 1 # 1/s
 
 # Compartments
 # ============
@@ -262,13 +268,13 @@ Parameter('kcat_activate_PAR2', KCAT)
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
 Parameter('kr_PAR2_bind_Gaq', KR_BIND)
 # Gaq release GDP
-Parameter('k_gdp_release', 1)
+Parameter('k_gdp_release', K_CONVERT)
 # Gaq bind GTP
-Parameter('k_gtp_bind', 1)
+Parameter('k_gtp_bind', K_CONVERT)
 # Gbg dissociates from Gaq
-Parameter('k_gbg_release', 1)
+Parameter('k_gbg_release', K_CONVERT)
 # Gaq:GTP dissociates from PAR2
-Parameter('k_gaq_release', 1)
+Parameter('k_gaq_release', K_CONVERT)
 # Hydrolosis of GTP bound to Gaq
 # 1. Autocatalysis rate for Gaq is ~0.8 1/min = 0.0133 1/s
 # Bernstein et al. https://doi.org/10.1016/0092-8674(92)90165-9
@@ -282,7 +288,7 @@ Parameter('kr_rgs_bind_gaq', KR_BIND)
 # Also see Sprang https://dx.doi.org/10.1002%2Fbip.22836
 Parameter('k_gtp_to_gdp_rgs', k_gtp_to_gdp_auto.value*100)
 # Free Gaq:GDP recombines with Gbg
-Parameter('k_gaq_gdp_binds_gbg', 1)
+Parameter('k_gaq_gdp_binds_gbg', K_CONVERT)
 
 # PLC binding Gaq
 Parameter('kf_PLC_bind_Gaq', KF_BIND)
@@ -296,22 +302,20 @@ Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
 Parameter('kr_IP3_bind_IP3R', KR_BIND)
 # Transport of Ca2+
 #  ER -> cytosol:
-Parameter('kf_erCa_bind_IP3R', K_CA_BIND)
+Parameter('kf_erCa_bind_IP3R', K_CA_BIND*V_C.value/V_ER.value)
 Parameter('kr_erCa_bind_IP3R', KR_BIND)
-#Parameter('kf_erCa_bind_IP3R', KF_BIND)
-#Parameter('kr_erCa_bind_IP3R', KR_BIND)
 Parameter('kcat_tranport_erCa', K_ION_CHANNEL)
 #  cytosol -> ER:
-Parameter('kf_cytCa_bind_IP3R', K_CA_BIND)
-Parameter('kr_cytCa_bind_IP3R', KR_BIND)
+#Parameter('kf_cytCa_bind_IP3R', K_CA_BIND)
+#Parameter('kr_cytCa_bind_IP3R', KR_BIND)
 #Parameter('kf_cytCa_bind_IP3R', KF_BIND/10)
 #Parameter('kr_cytCa_bind_IP3R', KR_BIND*10)
-Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
+#Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 
-#Parameter('kr_cytCa_bind_TNXXL', )
+
 # Depletion of Cytosolic Ca2+
 # Base rate
-Parameter('kdeg_cytCa', 1) # 1/s
+Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Make the degradation rate scale with the relative change in cytosolic Ca concentration
 # so that the rate is zero initially but is still piecewise continuous when
@@ -323,7 +327,7 @@ Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 #Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa - Ca_C_0)/Ca_C_0)
 #Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa > Ca_C_0))
 # Depeletion/metabolism of IP3
-Parameter('kdeg_ip3', 1)
+Parameter('kdeg_ip3', K_DEGRADE)
 
 # Rules
 # =====
@@ -485,10 +489,13 @@ Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 Parameter('Kd_cytCa_bind_TNXXL', 800e-3) # microM
 Parameter('Rmax', 2.3)
 Parameter('HillCoeff_TNXXL', 1.5)
-# Compute the FRET signal using the Hill equation
-# Baseline resting signal
-Expression('Ro', Rmax*(Ca_C_0/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0/microM_to_molec)**HillCoeff_TNXXL))
-# Signal
-Expression('R', Rmax*((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL))
-# FRET ratio, deltaR/R
-Expression('FRET', (R-Ro)/Ro)
+# Compute the FRET ratio change relative to zero (i.e., Rmin) using the Hill equation,
+#    (R-Rmin)/Rmin = Rmax*[Ca2+]**h / (Kd + [Ca2+]**h) ,
+#       where Rmax is maximum FRET ratio change at saturation, h is the
+#       Hill Coefficient, and Kd is effective dissociation constant.
+# FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
+Expression('Frc_base', Rmax*(Ca_C_0/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0/microM_to_molec)**HillCoeff_TNXXL))
+# FRET ratio change for current concentration relative to zero - dR/R = (Rc-Rmin)/Rmin
+Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL))
+# Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
+Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
