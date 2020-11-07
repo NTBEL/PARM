@@ -1,2 +1,2 @@
 from .classic_gpcr_implicit_tnxxl import model
-from .classic_gpcr_implicit_tnxxl import nM_to_num_per_pL, microM_to_num_per_pL, nM_2AT_to_num_per_pL
+from .classic_gpcr_implicit_tnxxl import nM_to_num_per_pL, microM_to_num_per_pL, nM_2AT_to_num
