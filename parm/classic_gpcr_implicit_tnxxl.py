@@ -226,13 +226,18 @@ nM_2AT_to_num = 1e-9 * N_A * 1e-12 * (V_2AT / Vwell) * Vextra.value
 Parameter('TAT_0', C_2AT*nM_2AT_to_num)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
-# Endogenous receptor density of 1/micrometer^2 as in
-# Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# # tsA201 cells
+# Endogenous receptor density: 1/micrometer^2
+# Overexpressed receptor density: 3,000/micrometer^2
+# From Brinkerhoff et al. 2008: Receptor concentration 2e3 to 2e4 /cell
 Parameter('PAR2_0', 1*SAcell.value)
 Initial(PAR2(state='I', btat=None,bgaq=None)**CELL_MEMB, PAR2_0)
 # inactive G-protein heterotrimer Gaq-GDP:Gbg (the beta and gamma units are modeled as a single unit)
-# G-protein density of 40/micrometer^2 as in
-# Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# Endogenous G-protein density: 40/micrometer^2
+# Overexpressed G-protein density: 3,000/micrometer^2
+# Brinkerhoff et al. 2008: G-protein concentration 1e4 /cell
 Parameter('Gaq_0', 40*SAcell.value)
 # Alias the free Gprotein heterotrimer
 Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
@@ -250,8 +255,11 @@ Parameter('RGS_0', 0.010*microM_to_num_per_pL*Vcell.value)
 Initial(RGS(b=None)**CYTOSOL, RGS_0)
 
 # inactive PLC
-# Endogenous PLCB1 concentration of 3/micrometer^2 as in
-# Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# tsA201 cells
+# Endogenous PLCB1 concentration: 3/micrometer^2
+# Overexpressed PLCB1 concentration: 3,000/micrometer^2
+# PLC total endogenous: 10/micrometer^2
 Parameter('PLC_0', 3*SAcell.value)
 Initial(PLC(bgaq=None, bpip2=None)**CELL_MEMB, PLC_0)
 # PIP2
@@ -509,4 +517,4 @@ Expression('Frc_base', Rmax*(Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cyt
 Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL))
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
-print(Frc_base.get_value())
+#print(Frc_base.get_value())
