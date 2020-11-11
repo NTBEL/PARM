@@ -107,8 +107,11 @@ Parameter('Vcell', 1)
 Parameter("SAcell", 706.5)
 
 # Volume of the extracellular space
-# We'll just assume twice the cell volume
-Parameter("Vextra", 2*Vcell.value)
+# We'll just assum twice the cell volume
+# We'll use 1000x the cell volume as in these BNGL examples:
+#   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
+#   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
+Parameter("Vextra", 1000*Vcell.value)
 
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
@@ -125,7 +128,7 @@ nM_to_num_per_pL = 1e-9*N_A*1e-12
 
 
 # Default forward, reverse, and catalytic rates:
-KF_BIND = 1e-6 # 1/(molec*s) Default forward binding rate from Aldridge et al. https://doi.org/10.1038/ncb1497
+KF_BIND = 1e-6 # 1/(number*s) Default forward binding rate (for cell volume of 1 pL) from Aldridge et al. https://doi.org/10.1038/ncb1497
 KR_BIND = 1e-3 # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
 
@@ -221,9 +224,10 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 C_2AT = 330 # nM
 V_2AT = 50e6 # Volume of agonist added to wells is 50 microL
 Vwell = 150e6 # Looks like the total well volume was 150 microL (100 microL ACSF + 50 microL agonist in ACSF)
-nM_2AT_to_num = 1e-9 * N_A * 1e-12 * (V_2AT / Vwell) * Vextra.value
+nM_2AT_to_num = nM_to_num_per_pL * (V_2AT / Vwell) * Vextra.value
 #nM_2AT_to_molec = 1e-9 * V_2AT * N_A
 Parameter('TAT_0', C_2AT*nM_2AT_to_num)
+print(TAT_0.value)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
@@ -285,8 +289,9 @@ Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
 # PAR2 activation by 2AT
 # Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
 # has EC50 = 101.7 +- 28.7 nM, Kang et al. https://doi.org/10.1021/acsnano.9b01993
-Parameter('kf_PAR2_bind_TAT', KF_BIND)
-Parameter('kr_PAR2_bind_TAT', KR_BIND)
+# For kf we scale default KF_BIND by the ratio of extracellular to cellular volumes
+Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
+Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
 Parameter('kcat_activate_PAR2', KCAT)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
