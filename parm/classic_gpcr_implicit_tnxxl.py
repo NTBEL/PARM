@@ -75,55 +75,86 @@ follows:
 
 
 Unless otherwise noted the units used are:
-    Volume : L
-    Area: L^(2/3)
-    Distance: L^(1/3)
-    Volume Concentration: molec (M*N_A*V) - molec is short for molecules
-    Area Concentration: molec/scaled-area (M*N_A/4*pi*R^2, where R = (3*V/(Vcell*4*pi))**(1/3) and V is volume of the inner 3d compartment)
-    Forward bimolecular association rate constants (kf) : 1/(s*(molec))
+    Volume : pL
+    Area: micrometer^2
+    Distance: micrometer
+    Volume Concentration: number ( convert concentration by factor of V*N_A)
+    Area Concentration: number
+    Forward bimolecular association rate constants (kf) : 1/(s*number)
     Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
     Catalytic rate constants (kcat) :  1/s
     Other unimolecular rate constants: 1/s
-    Dissociation (bimolecular) constants: Kd : molec
-    Binding (bimolecular) constants : Kb : 1/(molec)
+    Dissociation (bimolecular) constants: Kd : number
+    Binding (bimolecular) constants : Kb : 1/number
 '''
 
+# PySB components
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
+# PySB macros
 from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze_state, degrade
+# NumPy
 import numpy as np
-from sympy.functions.elementary.exponential import exp
-from sympy import Piecewise
+# Avogadro's Number from scipy
+from scipy.constants import N_A
+
+# Conversion factors for concentration units.
+# microMolar to number/pL
+microM_to_num_per_pL = 1e-6*N_A*1e-12
+# nanoMolar to number/pL
+nM_to_num_per_pL = 1e-9*N_A*1e-12
+# Cubic micron to picoliter:
+#               cubic-micron to mL * mL to L * L to pL
+cubicmicron_to_pL = (1e-4)**3      * 1e-3    * 1e12
 
 Model()
 
 # Cellular volume, 10^-12 L as assumed in
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
-Vcell = 1.e-12 # L
+Parameter('Vcell', 1)
+# Cell-membrane surface area
+# Hek cells ~706.5 micrometer^2 https://doi.org/10.1038/s41598-017-07813-5
+Rcell = (3/4 * np.pi* Vcell.value/cubicmicron_to_pL)**(1/3)
+Parameter("SAcell", 4*np.pi*Rcell**2)
+# Effective cell-membrane thickness
+# Assume 10 nm (0.01 micron) as in https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
+Parameter("CMthickness", 0.01)
+# Effective volume of the cell-membrane
+Parameter("Vcm", SAcell.value*CMthickness.value*cubicmicron_to_pL*10)
+# Volume of the extracellular space
+# The following BNGL examples use 1000x the cell volume:
+#   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
+#   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
+# However, we'll just set the effective extracellular reaction volume to be on par
+# (pun not intended, but acknowledged) with the cellular volume to avoid overly large
+# numbers of agonist molecules.
+Parameter("Vextra", Vcell.value)
+
 # Volume of the ER lumen/cisternal space.
-# It is often >10% of cell volume according Aleberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
-# but for simplicity we will assume it is 10% of cell volume.
-Ver = Vcell * 0.1 # L
-
-# Avogadro's number
-N_A = 6.02214e23 # molec/mol
-
-# Conversion factors for concentration units.
-# microMolar to molec
-microM_to_molec = 1e-6*N_A*Vcell
-# nanoMolar to molec
-nM_to_molec = 1e-9*N_A*Vcell
+# It is often >10% of cell volume according Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
+# but for simplicity we will assume it is 15% of cell volume.
+Parameter("Ver", Vcell.value * 0.15) # L
+# Assume 10x the cell membrane surface area
+#Parameter("SAer", SAcell.value*10)
+Rer = (3/4 * np.pi* Ver.value/cubicmicron_to_pL)**(1/3)
+Parameter("SAer", 4*np.pi*Rer**2)
+# Effective thickness of ER membrane
+# Assume 10 nm is still reasonable
+Parameter("ERMthickness", 0.01)
+# Effective Volume of the ER membrane
+Parameter("Verm", ERMthickness.value*SAer.value*cubicmicron_to_pL)
 
 # Default forward, reverse, and catalytic rates:
-KF_BIND = 1e-6 # 1/(molec*s) Default forward binding rate from Aldridge et al. https://doi.org/10.1038/ncb1497
+# KF_BIND is equivalent to kf/(Vcell*1e-12) * N_A
+KF_BIND = 1e-6 # 1/(number*s) Default forward binding rate (for cell volume of 1 pL) from Aldridge et al. https://doi.org/10.1038/ncb1497
 KR_BIND = 1e-3 # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
 
-# Default signaling protein concentration, which is midway between
-# the 1 nM to 1 microM range assumed by Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
+# Default signaling protein concentration range
+# of 1 nM to 1 microM range assumed by Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 # for which they reference Wu and Pollard https://doi.org/10.1126/science.1113230
 # Also see Aldridge et al. https://doi.org/10.1038/ncb1497
-# Midpoint is 0.5 microM.
-SPC = 0.5*microM_to_molec
+# Set to 100 nM or 0.1 microM
+SPC = 0.1*microM_to_num_per_pL
 
 # As a first estimate for the forward binding reactions of Ca2+ we will assume
 # that it is diffusion-controlled following Smoluchowski eqn.:
@@ -132,16 +163,16 @@ SPC = 0.5*microM_to_molec
 # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
 D_Ca = 5.3e-6 # cm^2/s
 R_o = 2e-7 # cm
-# (1e-3) term is for unit conversion from cm^3/s*molec to 1/s*(molec/L)
-# mL/s*molec -> 10^-3 L/s*molec and dividing by Vcell converts to 1/(s*molec)
-K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/Vcell
+# (1e-3) term is for unit conversion from cm^3/s*number to 1/s*(number/L)
+# mL/s*number -> 10^-3 L/(s*number) and dividing by V converts to 1/(s*number)
+K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/(Vcell.value*1e-12)
 
 # Ion channel transport rate: up to 1e8 ions/s https://www.ncbi.nlm.nih.gov/books/NBK26910/
 K_ION_CHANNEL = 1e8
 
 # IP3 diffuses in mammalian at <= 10 micrometer^2/s https://dx.doi.org/10.1126%2Fscisignal.aag1625
 D_ip3 = 10e-8 # cm^2/s
-K_IP3_BIND = 4*np.pi*D_ip3*R_o*(1e-3)/Vcell
+K_IP3_BIND = 4*np.pi*D_ip3*R_o*(1e-3)/(Vcell.value*1e-12)
 
 # Default molecule degradation rate.
 K_DEGRADE = 1 # 1/s
@@ -151,24 +182,37 @@ K_CONVERT = 1 # 1/s
 
 # Compartments
 # ============
-# Since we have already converted initial concentrations into molec units
-# we need to scale the volumes used by compartments by Vcell.
-# Assume extracellular volume is spherical with volume twice that of the
-# cell volume.
-Parameter('V_EXTRA', 2)
+# Note: "For  elementary  bimolecular  reactions  with  the  rate  constant  given
+#  in  units  of volume/time,  the  rate  constant  is  divided  by the  volume
+#  of  the  reactant  compartment  with  the  highest  dimension"
+# -- https://www.informs-sim.org/wsc09papers/087.pdf
+# Although the above says "volume/time" for units of the forward binding rate,
+# as far as I can tell it is actually volume/time*number so that dividing by
+# the compartment volume would give you 1/time*number (e.g., 1/s*number),
+# corresponding to concentrations given in number per cell.
+# Also see BNGL example: https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
+
+# Since we are already converting concentrations to numbers per cell and
+# the default bimolecular binding rate is relative to the cell volume of 1 pL
+# we can scale all compartment sizes relative to the cell/cytosol volume.
+# When comparment volume scaling is applied it should yield:
+#       KF_BIND/(Vcompartment/Vcell) = KF_BIND*Vcell/Vcomparment
+# so that KF_BIND*Vcell is the default binding rate in pL/s*number and then
+# division by Vcompartment returns the scaled binding rate in 1/s*number.
+Parameter("V_EXTRA", Vextra.value/Vcell.value)
 Compartment('EXTRACELLULAR', dimension=3, size=V_EXTRA)
 # Cell Membrane
-Parameter('SA_CM', 4*np.pi*(3/(4*np.pi))**1.5)
-Compartment('CELL_MEMB', dimension=2, size=SA_CM, parent=EXTRACELLULAR)
+Parameter("V_CM", Vcm.value/Vcell.value)
+Compartment('CELL_MEMB', dimension=2, parent=EXTRACELLULAR, size=V_CM)
 # Cytosol
-Parameter('V_C', 1)
-Compartment('CYTOSOL', dimension=3, size=V_C, parent=CELL_MEMB)
+Parameter("V_C", Vcell.value/Vcell.value)
+Compartment('CYTOSOL', dimension=3, parent=CELL_MEMB, size=V_C)
 #  ER membrane
-Parameter('SA_ER', 4*np.pi*(3*Ver/(Vcell*4*np.pi))**1.5)
-Compartment('ER_MEMB', dimension=2, size=SA_ER, parent=CYTOSOL)
-#  internal ER lumen space
-Parameter('V_ER', Ver/Vcell)
-Compartment('ER_LUMEN', dimension=3, size=V_ER, parent=ER_MEMB)
+Parameter("V_ERM", Verm.value/Vcell.value)
+Compartment('ER_MEMB', dimension=2, parent=CYTOSOL, size=V_ERM)
+# ER lumen volume
+Parameter("V_ERL", Ver.value/Vcell.value)
+Compartment('ER_LUMEN', dimension=3, parent=ER_MEMB, size=V_ERL)
 
 # Monomers
 # ========
@@ -215,55 +259,85 @@ Annotation(IP3R, 'https://identifiers.org/uniprot:Q14643')
 # ==================
 # PAR2 agonist 2AT, 330 nM for Fig 2D data from Kang et al. https://doi.org/10.1021/acsnano.9b01993
 C_2AT = 330 # nM
-V_2AT = 50e-6 # Volume of agonist added to wells is 50 microL
-Vwell = 150e-6 # Looks like the total well volume was 150 microL (100 microL ACSF + 50 microL agonist in ACSF)
-nM_2AT_to_molec = 1e-9 * V_2AT * N_A * (Vcell/Vwell)
+V_2AT = 50e6 # Volume of agonist added to wells is 50 microL
+Vwell = 150e6 # Looks like the total well volume was 150 microL (100 microL ACSF + 50 microL agonist in ACSF)
+nM_2AT_to_num = nM_to_num_per_pL * (V_2AT / Vwell) * Vextra.value
 #nM_2AT_to_molec = 1e-9 * V_2AT * N_A
-Parameter('TAT_0', C_2AT*nM_2AT_to_molec)
+Parameter('TAT_0', C_2AT*nM_2AT_to_num)
+print(TAT_0.value)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # inactive PAR2
-Parameter('PAR2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# # tsA201 cells
+# Endogenous receptor density: 1/micrometer^2
+# Overexpressed receptor density: 3,000/micrometer^2
+# From Brinkerhoff et al. 2008: Receptor concentration 2e3 to 2e4 /cell
+Parameter('PAR2_0', 1*SAcell.value)
 Initial(PAR2(state='I', btat=None,bgaq=None)**CELL_MEMB, PAR2_0)
 # inactive G-protein heterotrimer Gaq-GDP:Gbg (the beta and gamma units are modeled as a single unit)
-Parameter('Gaq_0', SPC*V_C.value/SA_CM.value)
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# Endogenous G-protein density: 40/micrometer^2
+# Overexpressed G-protein density: 3,000/micrometer^2
+# Brinkerhoff et al. 2008: G-protein concentration 1e4 /cell
+Parameter('Gaq_0', 40*SAcell.value)
 # Alias the free Gprotein heterotrimer
 Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
 Initial(Gaq_gdp_Gbg, Gaq_0)
 # GTP
 # Physiolocal concentration of GTP in mammalian cells is 468 +/- 224 microM
 # as per Traut https://doi.org/10.1007/bf00928361
-Parameter('GTP_0', 468*microM_to_molec)
+Parameter('GTP_0', 468*microM_to_num_per_pL*Vcell.value)
 Initial(GTP(b=None)**CYTOSOL, GTP_0)
 # RGS
-Parameter('RGS_0', SPC)
+# For RAW 264.7 Cell model between 0.008 and 0.012 microM as
+# per Maurya and Subramaniam 2007 https://doi.org/10.1529/biophysj.106.097469
+# Assume 0.010 microM is a reasonable starting point.
+Parameter('RGS_0', 0.010*microM_to_num_per_pL*Vcell.value)
 Initial(RGS(b=None)**CYTOSOL, RGS_0)
 
 # inactive PLC
-Parameter('PLC_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
+# From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
+# tsA201 cells
+# Endogenous PLCB1 concentration: 3/micrometer^2
+# Overexpressed PLCB1 concentration: 3,000/micrometer^2
+# PLC total endogenous: 10/micrometer^2
+Parameter('PLC_0', 3*SAcell.value)
 Initial(PLC(bgaq=None, bpip2=None)**CELL_MEMB, PLC_0)
 # PIP2
-Parameter('PIP2_0', SPC*V_C.value/SA_CM.value) # Had to convert to area concentration.
+# Basal no. of PIP2 molecules is 49997 as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
+# also free PIP2 of 5000 per micrometer^2 used by Falkenburger et al. 2013 https://doi.org/10.1085/jgp.201210887
+# For nominal value will start with Lemon et al. value.
+Parameter('PIP2_0', 49997) # Had to convert to area concentration.
 Initial(PIP2(b=None)**CELL_MEMB, PIP2_0)
 # IP3R
-Parameter('IP3R_0', SPC*V_ER.value/SA_ER.value) # Had to convert to area concentration.
+Parameter('IP3R_0', SPC*Ver.value)
 Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None)**ER_MEMB, IP3R_0)
 # ER Ca2+ store
 # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
 # around 525 microM as reported in
 # Foyouzi-Youssefi et al. https://doi.org/10.1073/pnas.97.11.5723 (Fig. 3C, control)
-Parameter('Ca_0', 525*microM_to_molec)
+Parameter('Ca_0', 525*microM_to_num_per_pL*Ver.value)
 Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
-Parameter('Ca_C_0', 100*nM_to_molec)
+Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
 #Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
 
 # Kinetic Parameters
 # ==================
 # PAR2 activation by 2AT
-# Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
+# Note: Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
 # has EC50 = 101.7 +- 28.7 nM, Kang et al. https://doi.org/10.1021/acsnano.9b01993
 Parameter('kf_PAR2_bind_TAT', KF_BIND)
-Parameter('kr_PAR2_bind_TAT', KR_BIND)
-Parameter('kcat_activate_PAR2', KCAT)
+# PAR2 agonists in HEK 293T cells - LeSarge et al. https://doi.org/10.1021/acsmedchemlett.9b00094
+#   2f-LIGRLO(Sulfo-Cy5)-NH2 has Kd = 430 nM with EC50 = 296 nM
+#   Isox-Cha-Chg-ARK(Sulfo-Cy5)-NH2 has Kd = 38 nM with EC50 = 16 nM
+# Since 2AT has EC50 = 101.8 nM in Hek 293 cells its probably safe to
+# assume that the Kd for 2AT is somewhere between those two compounds.
+# 142 = (430-38)/(296-16) *101.5
+Parameter('Kd_PAR2_bind_TAT', 142*nM_to_num_per_pL*Vcell.value)
+Expression('kr_PAR2_bind_TAT', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
+#Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
+#Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
+Parameter('kcat_activate_PAR2', K_CONVERT*10)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
 Parameter('kr_PAR2_bind_Gaq', KR_BIND)
@@ -302,9 +376,11 @@ Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
 Parameter('kr_IP3_bind_IP3R', KR_BIND)
 # Transport of Ca2+
 #  ER -> cytosol:
-Parameter('kf_erCa_bind_IP3R', K_CA_BIND*V_C.value/V_ER.value)
+Parameter('kf_erCa_bind_IP3R', K_CA_BIND)
 Parameter('kr_erCa_bind_IP3R', KR_BIND)
-Parameter('kcat_tranport_erCa', K_ION_CHANNEL)
+# Effective IP3R channel permeability as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
+# is 525 1/s
+Parameter('kcat_tranport_erCa', 525)
 #  cytosol -> ER:
 #Parameter('kf_cytCa_bind_IP3R', K_CA_BIND)
 #Parameter('kr_cytCa_bind_IP3R', KR_BIND)
@@ -312,22 +388,13 @@ Parameter('kcat_tranport_erCa', K_ION_CHANNEL)
 #Parameter('kr_cytCa_bind_IP3R', KR_BIND*10)
 #Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 
-
 # Depletion of Cytosolic Ca2+
 # Base rate
 Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
-Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
-# Make the degradation rate scale with the relative change in cytosolic Ca concentration
-# so that the rate is zero initially but is still piecewise continuous when
-# the cytosolic calcium rises above the baseline.
-# Logistic function which will run from 0 to 0.5*kdeg_cytCa
-#Expression('kdeg_cytCa_exp', Piecewise( (0, cytoCa <= Ca_C_0),
-#                                        (kdeg_cytCa /(1+ exp(-(cytoCa - Ca_C_0)/Ca_C_0)) - 0.5*kdeg_cytCa,cytoCa > Ca_C_0)
-#                                      ))
-#Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa - Ca_C_0)/Ca_C_0)
-#Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa > Ca_C_0))
+
 # Depeletion/metabolism of IP3
-Parameter('kdeg_ip3', K_DEGRADE)
+# 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
+Parameter('kdeg_ip3', 1.25)
 
 # Rules
 # =====
@@ -481,7 +548,7 @@ Observable('aPAR2', PAR2(state='A'))
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
 Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
-
+Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Get the FRET signal
 # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
 # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
@@ -493,9 +560,11 @@ Parameter('HillCoeff_TNXXL', 1.5)
 #    (R-Rmin)/Rmin = Rmax*[Ca2+]**h / (Kd + [Ca2+]**h) ,
 #       where Rmax is maximum FRET ratio change at saturation, h is the
 #       Hill Coefficient, and Kd is effective dissociation constant.
+Expression('Ca_num_to_microM', 1/(Vcell*microM_to_num_per_pL))
 # FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
-Expression('Frc_base', Rmax*(Ca_C_0/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0/microM_to_molec)**HillCoeff_TNXXL))
+Expression('Frc_base', Rmax*(Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL))
 # FRET ratio change for current concentration relative to zero - dR/R = (Rc-Rmin)/Rmin
-Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)/microM_to_molec)**HillCoeff_TNXXL))
+Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL))
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
+#print(Frc_base.get_value())
