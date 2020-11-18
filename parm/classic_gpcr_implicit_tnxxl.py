@@ -97,6 +97,15 @@ import numpy as np
 # Avogadro's Number from scipy
 from scipy.constants import N_A
 
+# Conversion factors for concentration units.
+# microMolar to number/pL
+microM_to_num_per_pL = 1e-6*N_A*1e-12
+# nanoMolar to number/pL
+nM_to_num_per_pL = 1e-9*N_A*1e-12
+# Cubic micron to picoliter:
+#               cubic-micron to mL * mL to L * L to pL
+cubicmicron_to_pL = (1e-4)**3      * 1e-3    * 1e12
+
 Model()
 
 # Cellular volume, 10^-12 L as assumed in
@@ -104,30 +113,38 @@ Model()
 Parameter('Vcell', 1)
 # Cell-membrane surface area
 # Hek cells ~706.5 micrometer^2 https://doi.org/10.1038/s41598-017-07813-5
-Parameter("SAcell", 706.5)
-
+Rcell = (3/4 * np.pi* Vcell.value/cubicmicron_to_pL)**(1/3)
+Parameter("SAcell", 4*np.pi*Rcell**2)
+# Effective cell-membrane thickness
+# Assume 10 nm (0.01 micron) as in https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
+Parameter("CMthickness", 0.01)
+# Effective volume of the cell-membrane
+Parameter("Vcm", SAcell.value*CMthickness.value*cubicmicron_to_pL*10)
 # Volume of the extracellular space
-# We'll just assum twice the cell volume
-# We'll use 1000x the cell volume as in these BNGL examples:
+# The following BNGL examples use 1000x the cell volume:
 #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
 #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
-Parameter("Vextra", 1000*Vcell.value)
+# However, we'll just set the effective extracellular reaction volume to be on par
+# (pun not intended, but acknowledged) with the cellular volume to avoid overly large
+# numbers of agonist molecules.
+Parameter("Vextra", Vcell.value)
 
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
 # but for simplicity we will assume it is 15% of cell volume.
 Parameter("Ver", Vcell.value * 0.15) # L
 # Assume 10x the cell membrane surface area
-Parameter("SAer", SAcell.value*10)
-
-# Conversion factors for concentration units.
-# microMolar to number/pL
-microM_to_num_per_pL = 1e-6*N_A*1e-12
-# nanoMolar to number/pL
-nM_to_num_per_pL = 1e-9*N_A*1e-12
-
+#Parameter("SAer", SAcell.value*10)
+Rer = (3/4 * np.pi* Ver.value/cubicmicron_to_pL)**(1/3)
+Parameter("SAer", 4*np.pi*Rer**2)
+# Effective thickness of ER membrane
+# Assume 10 nm is still reasonable
+Parameter("ERMthickness", 0.01)
+# Effective Volume of the ER membrane
+Parameter("Verm", ERMthickness.value*SAer.value*cubicmicron_to_pL)
 
 # Default forward, reverse, and catalytic rates:
+# KF_BIND is equivalent to kf/(Vcell*1e-12) * N_A
 KF_BIND = 1e-6 # 1/(number*s) Default forward binding rate (for cell volume of 1 pL) from Aldridge et al. https://doi.org/10.1038/ncb1497
 KR_BIND = 1e-3 # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10 # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
@@ -147,8 +164,8 @@ SPC = 0.1*microM_to_num_per_pL
 D_Ca = 5.3e-6 # cm^2/s
 R_o = 2e-7 # cm
 # (1e-3) term is for unit conversion from cm^3/s*number to 1/s*(number/L)
-# mL/s*molec -> 10^-3 L/(s*number) and dividing by Ver converts to 1/(s*number)
-K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/(Ver.value*1e-12)
+# mL/s*number -> 10^-3 L/(s*number) and dividing by V converts to 1/(s*number)
+K_CA_BIND = 4*np.pi*D_Ca*R_o*(1e-3)/(Vcell.value*1e-12)
 
 # Ion channel transport rate: up to 1e8 ions/s https://www.ncbi.nlm.nih.gov/books/NBK26910/
 K_ION_CHANNEL = 1e8
@@ -165,17 +182,37 @@ K_CONVERT = 1 # 1/s
 
 # Compartments
 # ============
-# Since we are converting concentrations to numbers we can just leave
-# the compartment sizes as 1, which is the default.
-Compartment('EXTRACELLULAR', dimension=3)
+# Note: "For  elementary  bimolecular  reactions  with  the  rate  constant  given
+#  in  units  of volume/time,  the  rate  constant  is  divided  by the  volume
+#  of  the  reactant  compartment  with  the  highest  dimension"
+# -- https://www.informs-sim.org/wsc09papers/087.pdf
+# Although the above says "volume/time" for units of the forward binding rate,
+# as far as I can tell it is actually volume/time*number so that dividing by
+# the compartment volume would give you 1/time*number (e.g., 1/s*number),
+# corresponding to concentrations given in number per cell.
+# Also see BNGL example: https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
+
+# Since we are already converting concentrations to numbers per cell and
+# the default bimolecular binding rate is relative to the cell volume of 1 pL
+# we can scale all compartment sizes relative to the cell/cytosol volume.
+# When comparment volume scaling is applied it should yield:
+#       KF_BIND/(Vcompartment/Vcell) = KF_BIND*Vcell/Vcomparment
+# so that KF_BIND*Vcell is the default binding rate in pL/s*number and then
+# division by Vcompartment returns the scaled binding rate in 1/s*number.
+Parameter("V_EXTRA", Vextra.value/Vcell.value)
+Compartment('EXTRACELLULAR', dimension=3, size=V_EXTRA)
 # Cell Membrane
-Compartment('CELL_MEMB', dimension=2, parent=EXTRACELLULAR)
+Parameter("V_CM", Vcm.value/Vcell.value)
+Compartment('CELL_MEMB', dimension=2, parent=EXTRACELLULAR, size=V_CM)
 # Cytosol
-Compartment('CYTOSOL', dimension=3, parent=CELL_MEMB)
+Parameter("V_C", Vcell.value/Vcell.value)
+Compartment('CYTOSOL', dimension=3, parent=CELL_MEMB, size=V_C)
 #  ER membrane
-Compartment('ER_MEMB', dimension=2, parent=CYTOSOL)
+Parameter("V_ERM", Verm.value/Vcell.value)
+Compartment('ER_MEMB', dimension=2, parent=CYTOSOL, size=V_ERM)
 # ER lumen volume
-Compartment('ER_LUMEN', dimension=3, parent=ER_MEMB)
+Parameter("V_ERL", Ver.value/Vcell.value)
+Compartment('ER_LUMEN', dimension=3, parent=ER_MEMB, size=V_ERL)
 
 # Monomers
 # ========
@@ -287,12 +324,20 @@ Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
 # Kinetic Parameters
 # ==================
 # PAR2 activation by 2AT
-# Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
+# Note: Ca2+ signal Max. FRET Dose-Response for 2AT activation of PAR2
 # has EC50 = 101.7 +- 28.7 nM, Kang et al. https://doi.org/10.1021/acsnano.9b01993
-# For kf we scale default KF_BIND by the ratio of extracellular to cellular volumes
-Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
-Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
-Parameter('kcat_activate_PAR2', KCAT)
+Parameter('kf_PAR2_bind_TAT', KF_BIND)
+# PAR2 agonists in HEK 293T cells - LeSarge et al. https://doi.org/10.1021/acsmedchemlett.9b00094
+#   2f-LIGRLO(Sulfo-Cy5)-NH2 has Kd = 430 nM with EC50 = 296 nM
+#   Isox-Cha-Chg-ARK(Sulfo-Cy5)-NH2 has Kd = 38 nM with EC50 = 16 nM
+# Since 2AT has EC50 = 101.8 nM in Hek 293 cells its probably safe to
+# assume that the Kd for 2AT is somewhere between those two compounds.
+# 142 = (430-38)/(296-16) *101.5
+Parameter('Kd_PAR2_bind_TAT', 142*nM_to_num_per_pL*Vcell.value)
+Expression('kr_PAR2_bind_TAT', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
+#Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
+#Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
+Parameter('kcat_activate_PAR2', K_CONVERT*10)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
 Parameter('kr_PAR2_bind_Gaq', KR_BIND)
