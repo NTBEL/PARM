@@ -288,6 +288,11 @@ Initial(Gaq_gdp_Gbg, Gaq_0)
 # as per Traut https://doi.org/10.1007/bf00928361
 Parameter('GTP_0', 468*microM_to_num_per_pL*Vcell.value)
 Initial(GTP(b=None)**CYTOSOL, GTP_0)
+# GDP
+# Physiolocal concentration of GDP in human cells is 36 microM
+# as per Traut https://doi.org/10.1007/BF00928361
+Parameter('GDP_0', 36*microM_to_num_per_pL*Vcell.value)
+Initial(GDP(b=None)**CYTOSOL, GDP_0)
 # RGS
 # For RAW 264.7 Cell model between 0.008 and 0.012 microM as
 # per Maurya and Subramaniam 2007 https://doi.org/10.1529/biophysj.106.097469
@@ -338,13 +343,16 @@ Expression('kr_PAR2_bind_TAT', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
 #Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
 #Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
 Parameter('kcat_activate_PAR2', K_CONVERT*10)
+Parameter('k_inactivate_PAR2', K_CONVERT/10)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
 Parameter('kr_PAR2_bind_Gaq', KR_BIND)
 # Gaq release GDP
-Parameter('k_gdp_release', K_CONVERT)
+Parameter('k_gdp_release', KR_BIND*100)
+Parameter('k_gdp_bind', KF_BIND*10)
 # Gaq bind GTP
-Parameter('k_gtp_bind', K_CONVERT)
+Parameter('k_gtp_bind', KF_BIND*100)
+Parameter('k_gtp_release', KR_BIND)
 # Gbg dissociates from Gaq
 Parameter('k_gbg_release', K_CONVERT)
 # Gaq:GTP dissociates from PAR2
@@ -361,8 +369,11 @@ Parameter('kr_rgs_bind_gaq', KR_BIND)
 # is 100x higher as per Chidiac and Ross https://doi.org/10.1074/jbc.274.28.19639
 # Also see Sprang https://dx.doi.org/10.1002%2Fbip.22836
 Parameter('k_gtp_to_gdp_rgs', k_gtp_to_gdp_auto.value*100)
+# 3. PLC binding enhanced conversion of GTP to GDP
+Parameter('k_gtp_to_gdp_plc', k_gtp_to_gdp_rgs.value/2)
 # Free Gaq:GDP recombines with Gbg
 Parameter('k_gaq_gdp_binds_gbg', K_CONVERT)
+#Parameter('k_gaq_gdp_unbinds_gbg', KR_BIND)
 
 # PLC binding Gaq
 Parameter('kf_PLC_bind_Gaq', KF_BIND)
@@ -407,6 +418,7 @@ tat_PAR2_a = TAT(b=1)**EXTRACELLULAR % PAR2(state='A', btat=1, bgaq=None)**CELL_
 Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', btat=None, bgaq=None)**CELL_MEMB
      | tat_PAR2_i, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
 Rule('tat_activate_PAR2', tat_PAR2_i >> tat_PAR2_a, kcat_activate_PAR2)
+Rule('PAR2_inactivate', tat_PAR2_a >> tat_PAR2_i, k_inactivate_PAR2)
 # Gaq activation by activated-PAR2:
 #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
 tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
@@ -420,14 +432,14 @@ tat_PAR2_a_Gaq_Gbg = (TAT(b=1)**EXTRACELLULAR %
                           PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=None, bgbg=4)**CELL_MEMB %
                            Gbg(b=4)**CELL_MEMB)
-Rule('gaq_releases_gdp',tat_PAR2_a_Gaq_gdp_Gbg >> tat_PAR2_a_Gaq_Gbg +
-     GDP(b=None)**CYTOSOL, k_gdp_release)
+Rule('gaq_releases_gdp',tat_PAR2_a_Gaq_gdp_Gbg | tat_PAR2_a_Gaq_Gbg +
+     GDP(b=None)**CYTOSOL, k_gdp_release, k_gdp_bind)
 tat_PAR2_a_Gaq_gtp_Gbg = (TAT(b=1)**EXTRACELLULAR %
                           PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
-Rule('gaq_binds_gtp', tat_PAR2_a_Gaq_Gbg + GTP(b=None)**CYTOSOL >>
-    tat_PAR2_a_Gaq_gtp_Gbg, k_gtp_bind)
+Rule('gaq_binds_gtp', tat_PAR2_a_Gaq_Gbg + GTP(b=None)**CYTOSOL |
+    tat_PAR2_a_Gaq_gtp_Gbg, k_gtp_bind, k_gtp_release)
 tat_PAR2_a_Gaq_gtp = (TAT(b=1)**EXTRACELLULAR %
                           PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=None)**CELL_MEMB %
@@ -455,6 +467,8 @@ Gaq_gtp_PLC = (Gaq(bpar=None, bgdp=3, bgbg=1)**CELL_MEMB % GTP(b=3)**CELL_MEMB
                % PLC(bgaq=1)**CELL_MEMB)
 catalyze_complex(Gaq_gtp_PLC, 'bpip2', PIP2()**CELL_MEMB, 'b', IP3(b=None)**CYTOSOL,
                  [kf_PLC_bind_PIP2,kr_PLC_bind_PIP2,kcat_PIP2_to_IP3])
+# Enhanced hydrolosis of GTP when Gaq is bound to PLC
+Rule('gtp_hydrolosis_plc', Gaq_gtp_PLC >> Gaq_gdp + PLC(bgaq=None, bpip2=None)**CYTOSOL, k_gtp_to_gdp_plc)
 # Binding of IP3 to IP3R - IP3R is activated when all 4 subunits are bound
 #   IP3R + IP3 <---> IP3R:IP3, subunit 1
 bind(IP3R(b2=None,b3=None,b4=None,bcaer=None,bcacyt=None)**ER_MEMB, 'b1', IP3(b=None)**CYTOSOL, 'b', [kf_IP3_bind_IP3R,kr_IP3_bind_IP3R])
