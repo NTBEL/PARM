@@ -351,9 +351,7 @@ Parameter('kf_PAR2_bind_TAT', KF_BIND)
 # 142 = (430-38)/(296-16) *101.5
 Parameter('Kd_PAR2_bind_TAT', 142*nM_to_num_per_pL*Vcell.value)
 Expression('kr_PAR2_bind_TAT', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
-#Parameter('kf_PAR2_bind_TAT', KF_BIND/(Vextra.value/Vcell.value))
-#Parameter('kr_PAR2_bind_TAT', KR_BIND*(Vextra.value/Vcell.value))
-Parameter('kcat_activate_PAR2', K_CONVERT*10)
+Parameter('k_activate_PAR2', K_CONVERT*10)
 Parameter('k_inactivate_PAR2', K_CONVERT/10)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
