@@ -81,7 +81,7 @@ Unless otherwise noted the units used are:
     Area: micrometer^2
     Distance: micrometer
     Volume Concentration: number ( convert concentration by factor of V*N_A)
-    Area Concentration: number
+    Area Concentration: number/micrometer^2
     Forward bimolecular association rate constants (kf) : 1/(s*number)
     Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
     Catalytic rate constants (kcat) :  1/s
@@ -114,15 +114,18 @@ Model()
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 Parameter('Vcell', 1)
 # Cell-membrane surface area
-# Hek cells ~706.5 micrometer^2 https://doi.org/10.1038/s41598-017-07813-5
+# Note: Hek cells ~706.5 micrometer^2 https://doi.org/10.1038/s41598-017-07813-5
+# But we'll define the effective surface area to be a function of the radius
+# which corresponds to the volume.
 Rcell = (3/4 * np.pi* Vcell.value/cubicmicron_to_pL)**(1/3)
+# Get the cell surface area using the radius.
 Parameter("SAcell", 4*np.pi*Rcell**2)
 # Effective cell-membrane thickness
 # Assume 10 nm (0.01 micron) as in https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
 Parameter("CMthickness", 0.01)
 # Effective volume of the cell-membrane
 Parameter("Vcm", SAcell.value*CMthickness.value*cubicmicron_to_pL)
-print("Vcm: ",Vcm.value)
+
 # Volume of the extracellular space
 # The following BNGL examples use 1000x the cell volume:
 #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
@@ -134,8 +137,10 @@ Parameter("Vextra", Vcell.value)
 
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
-# but for simplicity we will assume it is 15% of cell volume.
-Parameter("Ver", Vcell.value * 0.15) # L
+# Lemon et al. 2003 use ratio of 0.185 ER lumen/cytosol
+# Politi et al. 2006 also use ratio of 0.185 ER lumen/cytosol
+# We can also use 0.185
+Parameter("Ver", Vcell.value * 0.185)
 # Assume 10x the cell membrane surface area
 #Parameter("SAer", SAcell.value*10)
 Rer = (3/4 * np.pi* Ver.value/cubicmicron_to_pL)**(1/3)
@@ -175,6 +180,7 @@ K_ION_CHANNEL = 1e8
 
 # IP3 diffuses in mammalian at <= 10 micrometer^2/s https://dx.doi.org/10.1126%2Fscisignal.aag1625
 D_ip3 = 10e-8 # cm^2/s
+# Assume the IP3 binding rate is diffusion-controlled by IP3 diffusion
 K_IP3_BIND = 4*np.pi*D_ip3*R_o*(1e-3)/(Vcell.value*1e-12)
 
 # Default molecule degradation rate.
@@ -196,12 +202,14 @@ K_CONVERT = 1 # 1/s
 # Also see BNGL example: https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
 
 # Since we are already converting concentrations to numbers per cell and
-# the default bimolecular binding rate is relative to the cell volume of 1 pL
-# we can scale all compartment sizes relative to the cell/cytosol volume.
+# the bimolecular binding rates are already relative to the cell volume
+# of 1 pL we can scale all compartment sizes relative to the cell/cytosol
+# volume.
 # When comparment volume scaling is applied it should yield:
 #       KF_BIND/(Vcompartment/Vcell) = KF_BIND*Vcell/Vcomparment
-# so that KF_BIND*Vcell is the default binding rate in pL/s*number and then
-# division by Vcompartment returns the scaled binding rate in 1/s*number.
+# so that KF_BIND*Vcell is the binding rate in pL/s*number and then
+# division by Vcompartment returns the compartment-specific scaled binding
+# rate in 1/s*number.
 Parameter("V_EXTRA", Vextra.value/Vcell.value)
 Compartment('EXTRACELLULAR', dimension=3, size=V_EXTRA)
 # Cell Membrane
@@ -286,9 +294,10 @@ Parameter('Gaq_0', 40*SAcell.value)
 Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
 Initial(Gaq_gdp_Gbg, Gaq_0)
 # GTP
-# Physiolocal concentration of GTP in mammalian cells is 468 +/- 224 microM
+# Physiolocal concentration of GTP in mammalian cells is generally 468 +/- 224 microM
+# and for human cells it is 305 microM
 # as per Traut https://doi.org/10.1007/bf00928361
-Parameter('GTP_0', 468*microM_to_num_per_pL*Vcell.value)
+Parameter('GTP_0', 305*microM_to_num_per_pL*Vcell.value)
 Initial(GTP(b=None)**CYTOSOL, GTP_0)
 # GDP
 # Physiolocal concentration of GDP in human cells is 36 microM
