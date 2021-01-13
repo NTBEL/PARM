@@ -548,11 +548,30 @@ degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
 
 # Observables
 # ===========
+# Total amounts of each monomer
+Observable('totTAT', TAT())
+Observable('totPAR2', PAR2())
+Observable('totGaq', Gaq())
+Observable('totGbg', Gbg())
+Observable('totGDP', GDP())
+Observable('totGTP', GTP())
+Observable('totRGS', RGS())
+Observable('totPLC', PLC())
+Observable('totPIP2', PIP2())
+Observable('totIP3', IP3())
+Observable('totIP3R', IP3R())
+Observable('totCa', Ca())
+# Inactive PAR2
 Observable('iPAR2', PAR2(state='I'))
+# Active PAR2
 Observable('aPAR2', PAR2(state='A'))
+# Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
+# Fully inactive IP3R (i.e., no IP3 bound)
 Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
+# The Ca2+ in the ER Lumen
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
+# Ca2+ in the Cytosol
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Get the FRET signal
 # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
