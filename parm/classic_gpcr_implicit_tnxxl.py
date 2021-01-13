@@ -464,7 +464,7 @@ Rule('release_gbg', tat_PAR2_a_Gaq_gtp_Gbg >> tat_PAR2_a_Gaq_gtp + Gbg(b=None)**
 # Alias the complex Gaq:GTP
 Gaq_gtp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GTP(b=3)**CELL_MEMB)
 # Gaq unbinds from PAR2
-Rule('release_gaq', tat_PAR2_a_Gaq_gtp >> Gaq_gtp, k_gaq_release)
+Rule('release_gaq', tat_PAR2_a_Gaq_gtp >> Gaq_gtp + tat_PAR2_a, k_gaq_release)
 # Alias the complex Gaq:GDP
 Gaq_gdp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GDP(b=3)**CELL_MEMB)
 # Gaq can (slowly) hydolyze GTP to GDP
