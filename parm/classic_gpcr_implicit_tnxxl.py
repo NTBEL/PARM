@@ -256,8 +256,6 @@ Monomer('IP3', ['b'])
 Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
-# FRET reporter TN-XXL
-Monomer('TNXXL', ['bca'])
 
 # Annotations
 # ===========
