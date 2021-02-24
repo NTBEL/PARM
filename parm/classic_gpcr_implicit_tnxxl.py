@@ -11,10 +11,11 @@ without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
 
 PAR2 activation and subsequent G-protein activation are modeled after the
 Classical GPCR/G-protein activation model (e.g., see Fig 2A of Oliveira et al.
-https://doi.org/10.3389/fnagi.2019.00089). The model also assumes that all four
-subunits of the IP3 receptor, IP3R, must be bound by IP3 before calcium can
-bind the receptor and be translocated between the ER lumen and cytosol which is
-consistent with work by Alzayady et al
+https://doi.org/10.3389/fnagi.2019.00089) in which G-protein heterotrimers
+only interact with the receptor after receptor-activation. The model also
+assumes that all four subunits of the IP3 receptor, IP3R, must be bound by IP3
+before calcium can bind the receptor and be translocated between the ER lumen
+and cytosol which is consistent with work by Alzayady et al
 https://doi.org/10.1126/scisignal.aad6281. However,  feedback to either reduce
 or enhance the IP3R calcium release is not included. Additionally, the
 cytosolic calcium level maintenance is modeled by a unidirectional degradation
@@ -34,7 +35,7 @@ parameters from the dose-repsonse curve of TN-XXL to Ca2+.
 The full set of interactions and sequence of rules included in the model are as
 follows:
 
-  1. Reversible 2-step activation of PAR2 by 2AT:
+  1. Two-state receptor activation of PAR2 by 2AT:
       2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
   2. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
       i) G protein heterotrimer binds activated PAR2:
