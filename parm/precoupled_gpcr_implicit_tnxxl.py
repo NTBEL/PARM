@@ -99,6 +99,7 @@ from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze
 import numpy as np
 # Avogadro's Number from scipy
 from scipy.constants import N_A
+from sympy.functions.elementary.miscellaneous import Max
 
 # Conversion factors for concentration units.
 # microMolar to number/pL
@@ -299,7 +300,8 @@ Initial(PAR2_i_Gaq_gdp_Gbg, PAR2_0_pre)
 # Overexpressed G-protein density: 3,000/micrometer^2
 # Brinkerhoff et al. 2008: G-protein concentration 1e4 /cell
 Parameter('Gaq_0', 40*SAcell.value)
-Expression('Gaq_0_free', Gaq_0-PAR2_0_pre)
+Expression('Gaq_0_free', Max(Gaq_0-PAR2_0_pre,0))
+#Expression('Gaq_0_free', Gaq_0-PAR2_0_pre)
 # Alias the free Gprotein heterotrimer
 Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
 Initial(Gaq_gdp_Gbg, Gaq_0_free)
@@ -619,3 +621,4 @@ Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL 
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
 #print(Frc_base.get_value())
+Observable('free_Gaq', Gaq_gdp_Gbg)
