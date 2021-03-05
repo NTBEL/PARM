@@ -542,9 +542,10 @@ Rule('transport_Ca_ER_CYTO',
 # These term were added to help fit the decay of FRET signal, assuming that
 # reduction of cytosolic Ca following the transient spike is the largest
 # contributor to the return towards baseline.
-# 1. e.g., SERCA to pump Ca2+ back into the lumen
+# 1. pump Ca back into the ER lumen; e.g. SERCA to pump Ca2+ back into the lumen
 Rule('pump_cytCa_to_ER', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**ER_LUMEN, k_ca_to_er)
-# 2. e.g., cell membrane ion channels to release excess Ca2+ into the extracellular space.
+# 2. pump Ca into the extracellular space; e.g., cell membrane ion
+# channels to release excess Ca2+ into the extracellular space.
 Rule('pump_cytCa_to_EXTRA', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**EXTRACELLULAR, k_ca_to_extracellular)
 
 # Metabolic consumption of IP3
