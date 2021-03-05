@@ -317,7 +317,7 @@ Initial(RGS(b=None)**CYTOSOL, RGS_0)
 # Overexpressed PLCB1 concentration: 3,000/micrometer^2
 # PLC total endogenous: 10/micrometer^2
 Parameter('PLC_0', 3*SAcell.value)
-Initial(PLC(bgaq=None, bpip2=None)**CELL_MEMB, PLC_0)
+Initial(PLC(bgaq=None, bpip2=None, bca=None)**CELL_MEMB, PLC_0)
 # PIP2
 # Basal no. of PIP2 molecules is 49997 as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
 # also free PIP2 of 5000 per micrometer^2 used by Falkenburger et al. 2013 https://doi.org/10.1085/jgp.201210887
@@ -484,19 +484,19 @@ Rule('gtp_hydrolosis_rgs', Gaq_gtp_RGS >> Gaq_gdp + RGS(b=None)**CYTOSOL, k_gtp_
 Rule('heterotrimer_reassociation', Gaq_gdp + Gbg(b=None)**CELL_MEMB >> Gaq_gdp_Gbg, k_gaq_gdp_binds_gbg)
 
 
-PLC_Ca = (PLC(bgaq=None, bpip=None, bca=4)**CELL_MEMB % Ca(loc='E', b=4))
+PLC_Ca = (PLC(bgaq=None, bpip2=None, bca=4)**CELL_MEMB % Ca(loc='E', b=4)**CYTOSOL)
 Gaq_gtp_PLC = (Gaq(bpar=None, bgdp=3, bgbg=1)**CELL_MEMB % GTP(b=3)**CELL_MEMB
-               % PLC(bgaq=1)**CELL_MEMB)
+               % PLC(bgaq=1, bpip2=None, bca=None)**CELL_MEMB)
 Gaq_gtp_PLC_Ca = (Gaq(bpar=None, bgdp=3, bgbg=1)**CELL_MEMB % GTP(b=3)**CELL_MEMB
-               % PLC(bgaq=1, bca=4)**CELL_MEMB % Ca(loc='E', b=4))
+               % PLC(bgaq=1, bpip2=None, bca=4)**CELL_MEMB % Ca(loc='E', b=4)**CYTOSOL)
 # PLC binds cytosolic Ca2+
-Rule(PLC(bgaq=None, bpip=None, bca=None)**CELL_MEMB + Ca(loc='E', b=None) | PLC_Ca, kf_PLC_bind_Ca, kr_PLC_bind_Ca)
+Rule('freePLC_binds_cytCa', PLC(bgaq=None, bpip2=None, bca=None)**CELL_MEMB + Ca(loc='E', b=None)**CYTOSOL | PLC_Ca, kf_PLC_bind_Ca, kr_PLC_bind_Ca)
 # PLC activation by binding Gaq:
 #    Gaq_A + PLC <---> Gaq_A:PLC
 #   Reusing the Gbg binding slot for PLC
 bind_complex(Gaq_gtp, 'bgbg', PLC()**CELL_MEMB, 'bgaq', [kf_PLC_bind_Gaq,kr_PLC_bind_Gaq])
 #    Gaq_A + PLC:Ca <---> Gaq_A:PLC:Ca
-Rule(Gaq_gtp + PLC_Ca | Gaq_gtp_PLC_Ca, kf_PLC_bind_Gaq, kr_PLC_bind_Gaq)
+Rule('Gaq_binds_PLCCa', Gaq_gtp + PLC_Ca | Gaq_gtp_PLC_Ca, kf_PLC_bind_Gaq, kr_PLC_bind_Gaq)
 # Conversion of PIP2 to IP3
 #    Gaq_A:PLC + PIP2 <---> Gaq_A:PLC:PIP2 ---> Gaq_A:PLC + IP3
 catalyze_complex(Gaq_gtp_PLC, 'bpip2', PIP2()**CELL_MEMB, 'b', IP3(b=None)**CYTOSOL,
@@ -506,8 +506,8 @@ catalyze_complex(Gaq_gtp_PLC_Ca, 'bpip2', PIP2()**CELL_MEMB, 'b', IP3(b=None)**C
                  [kf_PLC_bind_PIP2,kr_PLC_bind_PIP2,kcat_PIP2_to_IP3_Ca])
 # Enhanced hydrolosis of GTP when Gaq is bound to PLC
 #   Gaq:GTP:PLC ---> Gaq:GDP + PLC
-Rule('gtp_hydrolosis_plc', Gaq_gtp_PLC >> Gaq_gdp + PLC(bgaq=None, bpip2=None)**CYTOSOL, k_gtp_to_gdp_plc)
-
+Rule('gtp_hydrolosis_plc', Gaq_gtp_PLC >> Gaq_gdp + PLC(bgaq=None, bpip2=None, bca=None)**CYTOSOL, k_gtp_to_gdp_plc)
+Rule('gtp_hydrolosis_plc_ca', Gaq_gtp_PLC_Ca >> Gaq_gdp + PLC_Ca, k_gtp_to_gdp_plc)
 # Binding of IP3 to IP3R - IP3R is activated when all 4 subunits are bound
 #   IP3R + IP3 <---> IP3R:IP3, subunit 1
 bind(IP3R(b2=None,b3=None,b4=None,bcaer=None,bcacyt=None)**ER_MEMB, 'b1', IP3(b=None)**CYTOSOL, 'b', [kf_IP3_bind_IP3R,kr_IP3_bind_IP3R])
