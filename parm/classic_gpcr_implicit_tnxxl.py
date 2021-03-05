@@ -408,8 +408,10 @@ Parameter('kcat_tranport_erCa', 525)
 #Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 
 # Depletion of Cytosolic Ca2+
-# Base rate
-Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
+# Some Ca2+ gets pumped back into the ER
+Parameter('k_ca_to_er', K_DEGRADE) # 1/s
+# Some Ca2+ get pumped into the extracellular space
+Parameter('k_ca_to_extracellular', K_DEGRADE)
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
@@ -537,12 +539,13 @@ Rule('transport_Ca_ER_CYTO',
      IP3(b=4)**CYTOSOL + Ca(loc='E', b=None)**CYTOSOL, kcat_tranport_erCa)
 
 # Degradation of Cytosolic Ca2+ --
-# This term was added to help fit the decay of FRET signal, presumably
-# representing a lumped process for the regulation of Ca2+ concentration in the
-# cytosol after the ER store is released (e.g., activation of
-# SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
-# channels to release excess Ca2+ into the extracellular space).
-degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
+# These term were added to help fit the decay of FRET signal, assuming that
+# reduction of cytosolic Ca following the transient spike is the largest
+# contributor to the return towards baseline.
+# 1. e.g., SERCA to pump Ca2+ back into the lumen
+Rule('pump_cytCa_to_ER', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**ER_LUMEN, k_ca_to_er)
+# 2. e.g., cell membrane ion channels to release excess Ca2+ into the extracellular space.
+Rule('pump_cytCa_to_EXTRA', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**EXTRACELLULAR, k_ca_to_extracellular)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
