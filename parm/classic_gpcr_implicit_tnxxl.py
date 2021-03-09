@@ -412,6 +412,8 @@ Parameter('kcat_tranport_erCa', 525)
 Parameter('k_ca_to_er', K_DEGRADE) # 1/s
 # Some Ca2+ get pumped into the extracellular space
 Parameter('k_ca_to_extracellular', K_DEGRADE)
+# Some Ca2+ get pumped into the cytosol from extracellular space
+Parameter('k_ca_extra_to_cytosol', K_DEGRADE)
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
@@ -547,6 +549,8 @@ Rule('pump_cytCa_to_ER', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**ER
 # 2. pump Ca into the extracellular space; e.g., cell membrane ion
 # channels to release excess Ca2+ into the extracellular space.
 Rule('pump_cytCa_to_EXTRA', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**EXTRACELLULAR, k_ca_to_extracellular)
+# 3. some Ca gets re-pumped from the extracellular space back into the cytosol.
+Rule('pump_extCa_to_CYT', Ca(loc='E', b=None)**EXTRACELLULAR >> Ca(loc='E', b=None)**CYTOSOL, k_ca_extra_to_cytosol)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
