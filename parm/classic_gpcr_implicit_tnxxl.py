@@ -94,7 +94,7 @@ Unless otherwise noted the units used are:
 # PySB components
 from pysb import Model, Monomer, Parameter, Initial, Rule, Observable, Expression, Annotation, Compartment, ANY
 # PySB macros
-from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze_state, degrade
+from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze_state, degrade, synthesize
 # NumPy
 import numpy as np
 # Avogadro's Number from scipy
@@ -435,6 +435,7 @@ Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 Parameter('Kd_cytCa_bind_CaChannel', 200*nM_to_num_per_pL*Vcell.value)
 Parameter('HillCoeff_cytCa_bind_CaChannel', 1)
 Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa**HillCoeff_cytCa_bind_CaChannel / (Kd_cytCa_bind_CaChannel+cytoCa**HillCoeff_cytCa_bind_CaChannel)))
+Expression('ksynth_cytCa_exp', kdeg_cytCa * (Ca_C_0**HillCoeff_cytCa_bind_CaChannel / (Kd_cytCa_bind_CaChannel+Ca_C_0**HillCoeff_cytCa_bind_CaChannel)))
 # Using the Heaviside function with the degradation step seems to cause
 # lots of problems with ODE integrators, so I'm replacing this with an explicit
 # Calcium channel in the cell-membrane that transports cytosolic Ca2+ into the EXTRACELLULAR space.
@@ -585,6 +586,10 @@ Rule('transport_Ca_ER_CYTO',
 # cytosol after the ER store is released (e.g., activation of cell membrane ion
 # channels to release excess Ca2+ into the extracellular space).
 degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa_exp)
+# Balances the degradation of cytosolic Ca2+ when its concentration is
+# at the initial (baseline) concentration (i.e., the net change is zero when
+# no new Calcium has been added to the cytosol.)
+synthesize(Ca(loc='E', b=None)**CYTOSOL, ksynth_cytCa_exp)
 #Rule('cytCa_bind_to_CaChannel', Ca(loc='E', b=None)**CYTOSOL +
 #     CaChannel(b=None)**CELL_MEMB |
 #     Ca(loc='E', b=1)**EXTRACELLULAR % CaChannel(b=1)**CELL_MEMB,
