@@ -387,12 +387,17 @@ Parameter('k_gaq_gdp_binds_gbg', K_CONVERT)
 Parameter('kf_PLC_bind_Gaq', KF_BIND)
 Parameter('kr_PLC_bind_Gaq', KR_BIND)
 # PLC binding cytosolic calcium
-Parameter('kf_PLC_bind_Ca', K_CA_BIND)
-Parameter('kr_PLC_bind_Ca', KR_BIND)
+# 20 1/microM*s , nominal value from Flaherty et al. 2008
+Parameter('kf_PLC_bind_Ca', (20/microM_to_num_per_pL)/Vcell.value)
+# 8 1/s, nominal value from Flaherty et al. 2008
+Parameter('kr_PLC_bind_Ca', 8)
 # Conversion of PIP2 to IP3
-Parameter('kf_PLC_bind_PIP2', KF_BIND)
-Parameter('kr_PLC_bind_PIP2', KR_BIND)
-Parameter('kcat_PIP2_to_IP3', KCAT)
+# 70.87 1/microM*s, nominal value from Flaherty et al. 2008
+Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcell.value)
+# 1/s, nominal value from Flaherty et al. 2008
+Parameter('kr_PLC_bind_PIP2', 1)
+# 5.41 1/s, nominal value for Ca bound PLC from Flaherty et al. 2008
+Parameter('kcat_PIP2_to_IP3', 5.41/10)
 Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*10)
 # Binding of IP3 to IP3R
 Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
