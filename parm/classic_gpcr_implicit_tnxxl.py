@@ -257,6 +257,8 @@ Monomer('IP3', ['b'])
 Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
+# CM Calcium Channel
+Monomer('CaChannel',['b'])
 
 # Annotations
 # ===========
@@ -336,6 +338,10 @@ Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
 Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
 
+Parameter('CaChannel_0', 1e9) # Set the number of channels to be large, so Ca2+
+# binding and transport is effectively psuedo-first order w.r.t. cytosolic Ca2+ concentration.
+Initial(CaChannel(b=None)**CELL_MEMB, CaChannel_0)
+
 # Kinetic Parameters
 # ==================
 # PAR2 activation by 2AT
@@ -393,7 +399,7 @@ Parameter('kf_PLC_bind_Ca', (20/microM_to_num_per_pL)/Vcell.value)
 Parameter('kr_PLC_bind_Ca', 8)
 # Conversion of PIP2 to IP3
 # 70.87 1/microM*s, nominal value from Flaherty et al. 2008
-Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcm.value)
+Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcell.value)
 # 1/s, nominal value from Flaherty et al. 2008
 Parameter('kr_PLC_bind_PIP2', 1)
 # 5.41 1/s, nominal value for Ca bound PLC from Flaherty et al. 2008
@@ -421,10 +427,21 @@ Parameter('kcat_tranport_erCa', 525)
 # Base rate
 Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
-# Define the Ca degradation using Heaviside function so that
-# the rate is zero when the cytosolic Ca2+ is <= the initial cytosolic Ca
-# concentration.
-Expression('kdeg_cytCa_exp', (cytoCa > Ca_C_0) * kdeg_cytCa)
+## Define the Ca degradation using Heaviside function so that
+## the rate is zero when the cytosolic Ca2+ is <= the initial cytosolic Ca
+## concentration.
+#Expression('kdeg_cytCa_exp', (cytoCa > Ca_C_0) * kdeg_cytCa * (cytoCa / (200*nM_to_num_per_pL*Vcell) ))
+# Define the Ca extrusion rate using a Hill equation.
+Parameter('Kd_cytCa_bind_CaChannel', 200*nM_to_num_per_pL*Vcell.value)
+Parameter('HillCoeff_cytCa_bind_CaChannel', 1)
+Expression('kdeg_cytCa_exp', kdeg_cytCa * (cytoCa**HillCoeff_cytCa_bind_CaChannel / (Kd_cytCa_bind_CaChannel+cytoCa**HillCoeff_cytCa_bind_CaChannel)))
+# Using the Heaviside function with the degradation step seems to cause
+# lots of problems with ODE integrators, so I'm replacing this with an explicit
+# Calcium channel in the cell-membrane that transports cytosolic Ca2+ into the EXTRACELLULAR space.
+#Parameter('Kd_cytCa_bind_CaChannel', 200*nM_to_num_per_pL*Vcell.value)
+#Parameter('kf_cytCa_bind_CaChannel', K_CA_BIND)
+#Expression('kr_cytCa_bind_CaChannel', Kd_cytCa_bind_CaChannel*kf_cytCa_bind_CaChannel)
+#Parameter('k_CaChannel_transport', K_ION_CHANNEL)
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
@@ -568,6 +585,12 @@ Rule('transport_Ca_ER_CYTO',
 # cytosol after the ER store is released (e.g., activation of cell membrane ion
 # channels to release excess Ca2+ into the extracellular space).
 degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa_exp)
+#Rule('cytCa_bind_to_CaChannel', Ca(loc='E', b=None)**CYTOSOL +
+#     CaChannel(b=None)**CELL_MEMB |
+#     Ca(loc='E', b=1)**EXTRACELLULAR % CaChannel(b=1)**CELL_MEMB,
+#     kf_cytCa_bind_CaChannel, kr_cytCa_bind_CaChannel)
+#Rule('transport_Ca_cyto_to_extra', Ca(loc='E', b=1)**CYTOSOL % CaChannel(b=1)**CELL_MEMB
+#     >> CaChannel(b=None)**CELL_MEMB + Ca(loc='E', b=None)**EXTRACELLULAR, k_CaChannel_transport)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
