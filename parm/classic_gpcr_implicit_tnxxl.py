@@ -398,7 +398,8 @@ Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcell.value)
 Parameter('kr_PLC_bind_PIP2', 1)
 # 5.41 1/s, nominal value for Ca bound PLC from Flaherty et al. 2008
 Parameter('kcat_PIP2_to_IP3', 5.41/10)
-Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*10)
+Parameter('ef_ca_pip2_to_ip3', 10) # ef = enhancement factor
+Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*pip2_to_ip3_enhance)
 # Binding of IP3 to IP3R
 Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
 Parameter('kr_IP3_bind_IP3R', KR_BIND)
