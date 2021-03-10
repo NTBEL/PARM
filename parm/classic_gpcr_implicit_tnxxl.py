@@ -362,9 +362,12 @@ Parameter('k_gdp_bind', KF_BIND)
 Parameter('k_gtp_bind', KF_BIND)
 Parameter('k_gtp_release', KR_BIND/10)
 # Gbg dissociates from Gaq
-Parameter('k_gbg_release', K_CONVERT)
+# 7000 1/microM*s, nominal rate for Gaq_GDP+Gbg -> Gbg_Gaq_GDP from Flaherty et al. 2008
+Parameter('kf_gbg_release', (7000/microM_to_num_per_pL)/Vcm.value)
+Parameter('kr_gbg_release', KR_BIND)
 # Gaq:GTP dissociates from PAR2
-Parameter('k_gaq_release', K_CONVERT)
+Parameter('kf_gaq_release', KF_BIND)
+Parameter('kr_gaq_release', KR_BIND)
 # Hydrolosis of GTP bound to Gaq
 # 1. Autocatalysis rate for Gaq is ~0.8 1/min = 0.0133 1/s
 # Bernstein et al. https://doi.org/10.1016/0092-8674(92)90165-9
@@ -380,8 +383,9 @@ Parameter('k_gtp_to_gdp_rgs', k_gtp_to_gdp_auto.value*100)
 # 3. PLC binding enhanced conversion of GTP to GDP
 Parameter('k_gtp_to_gdp_plc', k_gtp_to_gdp_rgs.value/2)
 # Free Gaq:GDP recombines with Gbg
-Parameter('k_gaq_gdp_binds_gbg', K_CONVERT)
-#Parameter('k_gaq_gdp_unbinds_gbg', KR_BIND)
+# 7000 1/microM*s, nominal rate for Gaq_GDP+Gbg -> Gbg_Gaq_GDP from Flaherty et al. 2008
+Parameter('kf_gaq_gdp_binds_gbg', (7000/microM_to_num_per_pL)/Vcm.value)
+Parameter('kr_gaq_gdp_binds_gbg', KR_BIND)
 
 # PLC binding Gaq
 Parameter('kf_PLC_bind_Gaq', KF_BIND)
@@ -459,11 +463,11 @@ tat_PAR2_a_Gaq_gtp = (TAT(b=1)**EXTRACELLULAR %
                            Gaq(bpar=2, bgdp=3, bgbg=None)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB)
 # The Beta-Gamma G protein units unbind from Gaq
-Rule('release_gbg', tat_PAR2_a_Gaq_gtp_Gbg >> tat_PAR2_a_Gaq_gtp + Gbg(b=None)**CELL_MEMB, k_gbg_release)
+Rule('release_gbg', tat_PAR2_a_Gaq_gtp + Gbg(b=None)**CELL_MEMB | tat_PAR2_a_Gaq_gtp_Gbg, kf_gbg_release, kr_gbg_release)
 # Alias the complex Gaq:GTP
 Gaq_gtp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GTP(b=3)**CELL_MEMB)
 # Gaq unbinds from PAR2
-Rule('release_gaq', tat_PAR2_a_Gaq_gtp >> Gaq_gtp + tat_PAR2_a, k_gaq_release)
+Rule('release_gaq', Gaq_gtp + tat_PAR2_a | tat_PAR2_a_Gaq_gtp, kf_gaq_release, kr_gaq_release)
 # Alias the complex Gaq:GDP
 Gaq_gdp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GDP(b=3)**CELL_MEMB)
 # Gaq can (slowly) hydolyze GTP to GDP
@@ -477,7 +481,7 @@ Rule('gaq_gtp_binds_rgs', Gaq_gtp + RGS(b=None)**CYTOSOL | Gaq_gtp_RGS, kf_rgs_b
 Rule('gtp_hydrolosis_rgs', Gaq_gtp_RGS >> Gaq_gdp + RGS(b=None)**CYTOSOL, k_gtp_to_gdp_rgs)
 # The Inactivated Gaq (Gaq:GDP) can reassociate the Beta-Gamma subunits to
 # reform the heterotrimer.
-Rule('heterotrimer_reassociation', Gaq_gdp + Gbg(b=None)**CELL_MEMB >> Gaq_gdp_Gbg, k_gaq_gdp_binds_gbg)
+Rule('heterotrimer_reassociation', Gaq_gdp + Gbg(b=None)**CELL_MEMB | Gaq_gdp_Gbg, kf_gaq_gdp_binds_gbg, kr_gaq_gdp_binds_gbg)
 
 # PLC activation by binding Gaq:
 #    Gaq_A + PLC <---> Gaq_A:PLC
