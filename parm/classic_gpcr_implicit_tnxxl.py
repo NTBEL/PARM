@@ -334,7 +334,7 @@ Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None)**ER_ME
 Parameter('Ca_0', 525*microM_to_num_per_pL*Ver.value)
 Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
-#Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
+Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
 
 # Kinetic Parameters
 # ==================
@@ -393,13 +393,13 @@ Parameter('kf_PLC_bind_Ca', (20/microM_to_num_per_pL)/Vcell.value)
 Parameter('kr_PLC_bind_Ca', 8)
 # Conversion of PIP2 to IP3
 # 70.87 1/microM*s, nominal value from Flaherty et al. 2008
-Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcell.value)
+Parameter('kf_PLC_bind_PIP2', (70.87/microM_to_num_per_pL)/Vcm.value)
 # 1/s, nominal value from Flaherty et al. 2008
 Parameter('kr_PLC_bind_PIP2', 1)
 # 5.41 1/s, nominal value for Ca bound PLC from Flaherty et al. 2008
 Parameter('kcat_PIP2_to_IP3', 5.41/10)
 Parameter('ef_ca_pip2_to_ip3', 10) # ef = enhancement factor
-Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*pip2_to_ip3_enhance)
+Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*ef_ca_pip2_to_ip3)
 # Binding of IP3 to IP3R
 Parameter('kf_IP3_bind_IP3R', K_IP3_BIND)
 Parameter('kr_IP3_bind_IP3R', KR_BIND)
@@ -420,6 +420,11 @@ Parameter('kcat_tranport_erCa', 525)
 # Depletion of Cytosolic Ca2+
 # Base rate
 Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
+Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
+# Define the Ca degradation using Heaviside function so that
+# the rate is zero when the cytosolic Ca2+ is <= the initial cytosolic Ca
+# concentration.
+Expression('kdeg_cytCa_exp', (cytoCa > Ca_C_0) * kdeg_cytCa)
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
@@ -560,10 +565,9 @@ Rule('transport_Ca_ER_CYTO',
 # Degradation of Cytosolic Ca2+ --
 # This term was added to help fit the decay of FRET signal, presumably
 # representing a lumped process for the regulation of Ca2+ concentration in the
-# cytosol after the ER store is released (e.g., activation of
-# SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
+# cytosol after the ER store is released (e.g., activation of cell membrane ion
 # channels to release excess Ca2+ into the extracellular space).
-degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
+degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa_exp)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
@@ -594,7 +598,7 @@ Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
 # The Ca2+ in the ER Lumen
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Ca2+ in the Cytosol
-Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
+#Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Get the FRET signal
 # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
 # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
@@ -610,7 +614,7 @@ Expression('Ca_num_to_microM', 1/(Vcell*microM_to_num_per_pL))
 # FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
 Expression('Frc_base', Rmax*(Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL))
 # FRET ratio change for current concentration relative to zero - dR/R = (Rc-Rmin)/Rmin
-Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL))
+Expression('Frc_curr', Rmax*((cytoCa)*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa)*Ca_num_to_microM)**HillCoeff_TNXXL))
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
 #print(Frc_base.get_value())
