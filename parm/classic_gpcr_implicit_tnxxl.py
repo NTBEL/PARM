@@ -258,7 +258,7 @@ Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
 # CM Calcium Channel
-Monomer('CaChannel',['b'])
+#Monomer('CaChannel',['b'])
 
 # Annotations
 # ===========
@@ -338,9 +338,9 @@ Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
 Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
 Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
 
-Parameter('CaChannel_0', 1e9) # Set the number of channels to be large, so Ca2+
+#Parameter('CaChannel_0', 1e9) # Set the number of channels to be large, so Ca2+
 # binding and transport is effectively psuedo-first order w.r.t. cytosolic Ca2+ concentration.
-Initial(CaChannel(b=None)**CELL_MEMB, CaChannel_0)
+#Initial(CaChannel(b=None)**CELL_MEMB, CaChannel_0)
 
 # Kinetic Parameters
 # ==================
