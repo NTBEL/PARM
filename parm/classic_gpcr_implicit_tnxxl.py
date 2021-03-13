@@ -415,6 +415,16 @@ Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
 Parameter('kdeg_ip3', 1.25)
 
+# PLC binding cytosolic calcium and enhancement of PIP2 conversion
+# 20 1/microM*s , nominal value from Flaherty et al. 2008
+Parameter('kf_PLC_bind_Ca', (20/microM_to_num_per_pL)/Vcell.value)
+# 8 1/s, nominal value from Flaherty et al. 2008
+Parameter('kr_PLC_bind_Ca', 8)
+# 5.41 1/s, nominal value for Ca bound PLC from Flaherty et al. 2008
+Parameter('kcat_PIP2_to_IP3', 5.41/10)
+Parameter('ef_ca_pip2_to_ip3', 10) # ef = enhancement factor
+Expression('kcat_PIP2_to_IP3_Ca', kcat_PIP2_to_IP3*ef_ca_pip2_to_ip3)
+
 # Rules
 # =====
 # 2-step activation of PAR2 by 2AT agonist:
@@ -546,6 +556,18 @@ degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
+
+# PLC binds cytosolic Ca2+
+
+Rule('freePLC_binds_cytCa', PLC(bgaq=None, bpip2=None, bca=None)**CELL_MEMB + Ca(loc='E', b=None)**CYTOSOL | PLC_Ca, kf_PLC_bind_Ca, kr_PLC_bind_Ca)
+# PLC activation by binding Gaq and enhanced conversion by Ca2+:
+#    Gaq_A + PLC:Ca <---> Gaq_A:PLC:Ca
+Rule('Gaq_binds_PLCCa', Gaq_gtp + PLC_Ca | Gaq_gtp_PLC_Ca, kf_PLC_bind_Gaq, kr_PLC_bind_Gaq)
+#    Gaq_A:PLC:Ca + PIP2 <---> Gaq_A:PLC:Ca:PIP2 ---> Gaq_A:PLC:Ca + IP3
+catalyze_complex(Gaq_gtp_PLC_Ca, 'bpip2', PIP2()**CELL_MEMB, 'b', IP3(b=None)**CYTOSOL,
+                 [kf_PLC_bind_PIP2,kr_PLC_bind_PIP2,kcat_PIP2_to_IP3_Ca])
+
+
 
 # Observables
 # ===========
