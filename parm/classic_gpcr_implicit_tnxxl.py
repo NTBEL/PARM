@@ -99,6 +99,7 @@ from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze
 import numpy as np
 # Avogadro's Number from scipy
 from scipy.constants import N_A
+from sympy.functions.elementary.miscellaneous import Max
 
 # Conversion factors for concentration units.
 # microMolar to number/pL
@@ -282,10 +283,9 @@ Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 # Overexpressed receptor density: 3,000/micrometer^2
 # From Brinkerhoff et al. 2008: Receptor concentration 2e3 to 2e4 /cell
 Parameter('PAR2_0', 1*SAcell.value)
-
-Parameter('f_denature', 0.)
+Parameter('f_denature', 0.) # By default no PAR2 has been denatured.
 Expression('PAR2_0_D', f_denature*PAR2_0)
-Expression('PAR2_0_I', PAR2_0-PAR2_0_D)
+Expression('PAR2_0_I', Max(PAR2_0-PAR2_0_D, 0))
 Initial(PAR2(state='I', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_I)
 Initial(PAR2(state='D', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_D)
 # inactive G-protein heterotrimer Gaq-GDP:Gbg (the beta and gamma units are modeled as a single unit)
@@ -571,6 +571,8 @@ Observable('totCa', Ca())
 Observable('iPAR2', PAR2(state='I'))
 # Active PAR2
 Observable('aPAR2', PAR2(state='A'))
+# Denatured PAR2
+Observable('dPAR2', PAR2(state='D'))
 # Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
 # Fully inactive IP3R (i.e., no IP3 bound)
