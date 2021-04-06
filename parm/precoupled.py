@@ -9,10 +9,10 @@ Kang et al.,  Transient Photoinactivation of Cell Membrane Protein Activity
 without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
 12487–12499 https://doi.org/10.1021/acsnano.9b01993
 
-PAR2 activation and subsequent G-protein activation are modeled after the
-Classical GPCR/G-protein activation model (e.g., see Fig 2A of Oliveira et al.
+PAR2 activation and subsequent G-protein activation are modeled after a
+Pre-coupled GPCR/G-protein activation model (e.g., see Fig 2B of Oliveira et al.
 https://doi.org/10.3389/fnagi.2019.00089) in which G-protein heterotrimers
-only interact with the receptor after receptor-activation. The model also
+can be pre-coupled to the receptor before receptor-activation. The model also
 assumes that all four subunits of the IP3 receptor, IP3R, must be bound by IP3
 before calcium can bind the receptor and be translocated between the ER lumen
 and cytosol which is consistent with work by Alzayady et al
@@ -36,8 +36,11 @@ The full set of interactions and sequence of rules included in the model are as
 follows:
 
   1. Two-state receptor activation of PAR2 by 2AT:
-      2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
-  2. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
+      i) 2AT binds and activates free PAR2 receptor:
+        2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
+     ii) 2AT binds and activates pre-coupled PAR2 receptor:
+        2AT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
+  2. Gaq activation by activated-PAR2:  | Note: G-proteins can be pre-coupled to PAR2.
       i) G protein heterotrimer binds activated PAR2:
          PAR2_A + Gaq:GDP:Gbg <---> PAR2_A:Gaq:GDP:Gbg
      ii) GDP preferentially unbinds from Gaq:
@@ -48,6 +51,8 @@ follows:
          PAR2_A:Gaq:GTP:Gbc ---> PAR2_A:Gaq:GTP + Gbc
       v) Gaq:GTP dissociates from PAR2, Gaq is now active (G protein dissociation from the receptor):
          PAR2_A:Gaq:GTP ---> PAR2_A + Gaq:GTP
+     vi) pre-coupled G-protein heterotrimer can dissociate from denatured PAR2:
+         PAR2_D:Gaq:GDP:Gbg ---> PAR2_D + Gaq:GDP:Gbg
   3. Hydrolosis of GTP by Gaq (inactivation of Gaq)
        a) Slow hydrolosis by Gaq alone
            Gaq:GTP ---> Gaq:GDP
@@ -486,7 +491,7 @@ tat_PAR2_i_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
 tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
                           PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
-                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)                           
+                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
 #    2AT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg
 Rule('tat_bind_PAR2_pre', TAT(b=None)**EXTRACELLULAR + PAR2_i_Gaq_gdp_Gbg
      | tat_PAR2_i_Gaq_gdp_Gbg, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
