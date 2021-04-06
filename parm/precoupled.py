@@ -477,7 +477,16 @@ Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', bortho=None, 
      | tat_PAR2_i, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
 #    TAT:PAR2_I <---> TAT:PAR2_A
 Rule('tat_activate_PAR2', tat_PAR2_i | tat_PAR2_a, k_activate_PAR2, k_inactivate_PAR2)
-
+# Alias the complex 2AT:PAR2_I:Gaq:GDP:Gbg
+tat_PAR2_i_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
+                          PAR2(state='I', bortho=1, bgaq=2)**CELL_MEMB %
+                           Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
+                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
+# Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
+tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
+                           Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
+                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)                           
 #    2AT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg
 Rule('tat_bind_PAR2_pre', TAT(b=None)**EXTRACELLULAR + PAR2_i_Gaq_gdp_Gbg
      | tat_PAR2_i_Gaq_gdp_Gbg, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
@@ -486,11 +495,7 @@ Rule('tat_activate_PAR2_pre', tat_PAR2_i_Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg, k
 
 # Gaq activation by activated-PAR2:
 #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
-# Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
-tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
-                           Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
-                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
+
 # PAR2 bindings the G protein heterotrimer
 Rule('par2_bind_gaq', tat_PAR2_a + Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg,
      kf_PAR2_bind_Gaq,kr_PAR2_bind_Gaq)
