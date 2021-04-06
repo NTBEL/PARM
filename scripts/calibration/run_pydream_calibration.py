@@ -12,12 +12,12 @@ from pysb.simulator import ScipyOdeSimulator # http://pysb.org/download
 # pydream_it
 from pydream_it import DreamParam #  https://github.com/LoLab-VU/pydream_it
 # Import the mode
-from parm import model # path_to/PARM needs to be added to your PYTHONPATH
+from parm import classic as model # path_to/PARM needs to be added to your PYTHONPATH
 # Import the conversion factors from the model
 from parm import microM_to_num_per_pL, nM_to_num_per_pL, nM_2AT_to_num
 
 # Load the Experimental Data, which is in PARM/exp_data
-exp_data = pd.read_csv('exp_data/FRET_data_Kang2019_FigS3C.csv')
+exp_data = pd.read_csv('../../exp_data/FRET_data_Kang2019_FigS3C.csv')
 
 times = exp_data['Time'].values
 
