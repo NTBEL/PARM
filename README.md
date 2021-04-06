@@ -12,4 +12,4 @@ PARM currently contains 2 model variants which encode alternative hypotheses for
   * `parm.classic` - Classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
   * `parm.precoupled` - Pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
 
-We refer you to Fig 2A of Oliveira et al. [https://doi.org/10.3389/fnagi.2019.00089](https://doi.org/10.3389/fnagi.2019.00089) for a shematic depicting the main elements of these two GPCR/G-protein activation mechanisms.
+We refer you to Fig 2 of Oliveira et al. [https://doi.org/10.3389/fnagi.2019.00089](https://doi.org/10.3389/fnagi.2019.00089) for a shematic depicting the main elements of these two GPCR/G-protein activation mechanisms.
