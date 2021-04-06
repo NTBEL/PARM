@@ -99,6 +99,7 @@ from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze
 import numpy as np
 # Avogadro's Number from scipy
 from scipy.constants import N_A
+from sympy.functions.elementary.miscellaneous import Max
 
 # Conversion factors for concentration units.
 # microMolar to number/pL
@@ -234,8 +235,8 @@ Compartment('ER_LUMEN', dimension=3, parent=ER_MEMB, size=V_ERL)
 # but in the experiments of Kang et al. PAR2 is actually activated by the
 # agonist 2AT, Kang et al. https://doi.org/10.1021/acsnano.9b01993)
 Monomer('TAT', ['b'])
-# PAR2, states: I = inactive (unbound), A = active (bound)
-Monomer('PAR2', ['btat', 'bgaq','state'], {'state': ['I','A']})
+# PAR2, states: I = inactive, A = active, D = denatured
+Monomer('PAR2', ['bortho', 'bgaq','state'], {'state': ['I','A','D']})
 # G-alpha_q G-protein unit, states: I = inactive, A = active
 Monomer('Gaq', ['bpar','bgbg','bgdp'])
 # G-beta-gamma G-protein units
@@ -275,14 +276,18 @@ nM_2AT_to_num = nM_to_num_per_pL * (V_2AT / Vwell) * Vextra.value
 #nM_2AT_to_molec = 1e-9 * V_2AT * N_A
 Parameter('TAT_0', C_2AT*nM_2AT_to_num)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
-# inactive PAR2
+# total PAR2
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
 # # tsA201 cells
 # Endogenous receptor density: 1/micrometer^2
 # Overexpressed receptor density: 3,000/micrometer^2
 # From Brinkerhoff et al. 2008: Receptor concentration 2e3 to 2e4 /cell
 Parameter('PAR2_0', 1*SAcell.value)
-Initial(PAR2(state='I', btat=None,bgaq=None)**CELL_MEMB, PAR2_0)
+Parameter('f_denature', 0.) # By default no PAR2 has been denatured.
+Expression('PAR2_0_D', f_denature*PAR2_0)
+Expression('PAR2_0_I', Max(PAR2_0-PAR2_0_D, 0))
+Initial(PAR2(state='I', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_I)
+Initial(PAR2(state='D', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_D)
 # inactive G-protein heterotrimer Gaq-GDP:Gbg (the beta and gamma units are modeled as a single unit)
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
 # Endogenous G-protein density: 40/micrometer^2
@@ -419,10 +424,10 @@ Parameter('kdeg_ip3', 1.25)
 # =====
 # 2-step activation of PAR2 by 2AT agonist:
 # Alias the TAT:PAR2 complexes
-tat_PAR2_i = TAT(b=1)**EXTRACELLULAR % PAR2(state='I', btat=1, bgaq=None)**CELL_MEMB
-tat_PAR2_a = TAT(b=1)**EXTRACELLULAR % PAR2(state='A', btat=1, bgaq=None)**CELL_MEMB
+tat_PAR2_i = TAT(b=1)**EXTRACELLULAR % PAR2(state='I', bortho=1, bgaq=None)**CELL_MEMB
+tat_PAR2_a = TAT(b=1)**EXTRACELLULAR % PAR2(state='A', bortho=1, bgaq=None)**CELL_MEMB
 #    2AT + PAR2_I <---> TAT:PAR2_I
-Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', btat=None, bgaq=None)**CELL_MEMB
+Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', bortho=None, bgaq=None)**CELL_MEMB
      | tat_PAR2_i, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
 #    TAT:PAR2_I <---> TAT:PAR2_A
 Rule('tat_activate_PAR2', tat_PAR2_i | tat_PAR2_a, k_activate_PAR2, k_inactivate_PAR2)
@@ -431,7 +436,7 @@ Rule('tat_activate_PAR2', tat_PAR2_i | tat_PAR2_a, k_activate_PAR2, k_inactivate
 #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
 # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
 tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
                            GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
 # PAR2 bindings the G protein heterotrimer
@@ -439,7 +444,7 @@ Rule('par2_bind_gaq', tat_PAR2_a + Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg,
      kf_PAR2_bind_Gaq,kr_PAR2_bind_Gaq)
 # Alias the complex  2AT:PAR2_A:Gaq:Gbg
 tat_PAR2_a_Gaq_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=None, bgbg=4)**CELL_MEMB %
                            Gbg(b=4)**CELL_MEMB)
 # GDP unbinds from Gaq
@@ -447,7 +452,7 @@ Rule('gaq_releases_gdp',tat_PAR2_a_Gaq_gdp_Gbg | tat_PAR2_a_Gaq_Gbg +
      GDP(b=None)**CYTOSOL, k_gdp_release, k_gdp_bind)
 # Alias the complex 2AT:PAR2_A:Gaq:GTP:Gbg
 tat_PAR2_a_Gaq_gtp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
 # GTP binds to Gaq
@@ -455,7 +460,7 @@ Rule('gaq_binds_gtp', tat_PAR2_a_Gaq_Gbg + GTP(b=None)**CYTOSOL |
     tat_PAR2_a_Gaq_gtp_Gbg, k_gtp_bind, k_gtp_release)
 # Alias the complex 2AT:PAR2_A:Gaq:GTP
 tat_PAR2_a_Gaq_gtp = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=None)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB)
 # The Beta-Gamma G protein units unbind from Gaq
@@ -566,6 +571,8 @@ Observable('totCa', Ca())
 Observable('iPAR2', PAR2(state='I'))
 # Active PAR2
 Observable('aPAR2', PAR2(state='A'))
+# Denatured PAR2
+Observable('dPAR2', PAR2(state='D'))
 # Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
 # Fully inactive IP3R (i.e., no IP3 bound)

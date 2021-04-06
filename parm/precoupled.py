@@ -9,13 +9,13 @@ Kang et al.,  Transient Photoinactivation of Cell Membrane Protein Activity
 without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
 12487–12499 https://doi.org/10.1021/acsnano.9b01993
 
-PAR2 activation and subsequent G-protein activation are modeled based on a
-Pre-coupled GPCR/G-protein activation (e.g., see Fig 2B of Oliveira et al.
-https://doi.org/10.3389/fnagi.2019.00089) in which G-proteins may be
-pre-coupled to the receptor before receptor-activation. The model also assumes
-that all four subunits of the IP3 receptor, IP3R, must be bound by IP3 before
-calcium can bind the receptor and be translocated between the ER lumen and
-cytosol which is consistent with work by Alzayady et al.
+PAR2 activation and subsequent G-protein activation are modeled after a
+Pre-coupled GPCR/G-protein activation model (e.g., see Fig 2B of Oliveira et al.
+https://doi.org/10.3389/fnagi.2019.00089) in which G-protein heterotrimers
+can be pre-coupled to the receptor before receptor-activation. The model also
+assumes that all four subunits of the IP3 receptor, IP3R, must be bound by IP3
+before calcium can bind the receptor and be translocated between the ER lumen
+and cytosol which is consistent with work by Alzayady et al
 https://doi.org/10.1126/scisignal.aad6281. However,  feedback to either reduce
 or enhance the IP3R calcium release is not included. Additionally, the
 cytosolic calcium level maintenance is modeled by a unidirectional degradation
@@ -36,9 +36,11 @@ The full set of interactions and sequence of rules included in the model are as
 follows:
 
   1. Two-state receptor activation of PAR2 by 2AT:
-      a) TAT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A, uncoupled
-      b) TAT + PAR2_I:Gaq:GDP:Gbg <--->  TAT:PAR2_I:Gaq:GDP:Gbg <--->  TAT:PAR2_A:Gaq:GDP:Gbg, pre-coupled
-  2. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
+      i) 2AT binds and activates free PAR2 receptor:
+        2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
+     ii) 2AT binds and activates pre-coupled PAR2 receptor:
+        2AT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
+  2. Gaq activation by activated-PAR2:  | Note: G-proteins can be pre-coupled to PAR2.
       i) G protein heterotrimer binds activated PAR2:
          PAR2_A + Gaq:GDP:Gbg <---> PAR2_A:Gaq:GDP:Gbg
      ii) GDP preferentially unbinds from Gaq:
@@ -49,6 +51,8 @@ follows:
          PAR2_A:Gaq:GTP:Gbc ---> PAR2_A:Gaq:GTP + Gbc
       v) Gaq:GTP dissociates from PAR2, Gaq is now active (G protein dissociation from the receptor):
          PAR2_A:Gaq:GTP ---> PAR2_A + Gaq:GTP
+     vi) pre-coupled G-protein heterotrimer can dissociate from denatured PAR2:
+         PAR2_D:Gaq:GDP:Gbg ---> PAR2_D + Gaq:GDP:Gbg
   3. Hydrolosis of GTP by Gaq (inactivation of Gaq)
        a) Slow hydrolosis by Gaq alone
            Gaq:GTP ---> Gaq:GDP
@@ -100,7 +104,8 @@ from pysb.macros import bind, bind_complex, catalyze, catalyze_complex, catalyze
 import numpy as np
 # Avogadro's Number from scipy
 from scipy.constants import N_A
-from sympy.functions.elementary.miscellaneous import Max
+from sympy.functions.elementary.miscellaneous import Max, Min
+from sympy import Piecewise
 
 # Conversion factors for concentration units.
 # microMolar to number/pL
@@ -236,8 +241,8 @@ Compartment('ER_LUMEN', dimension=3, parent=ER_MEMB, size=V_ERL)
 # but in the experiments of Kang et al. PAR2 is actually activated by the
 # agonist 2AT, Kang et al. https://doi.org/10.1021/acsnano.9b01993)
 Monomer('TAT', ['b'])
-# PAR2, states: I = inactive (unbound), A = active (bound)
-Monomer('PAR2', ['btat', 'bgaq','state'], {'state': ['I','A']})
+# PAR2, states: I = inactive, A = active, D = denatured
+Monomer('PAR2', ['bortho', 'bgaq','state'], {'state': ['I','A','D']})
 # G-alpha_q G-protein unit, states: I = inactive, A = active
 Monomer('Gaq', ['bpar','bgbg','bgdp'])
 # G-beta-gamma G-protein units
@@ -259,8 +264,6 @@ Monomer('IP3', ['b'])
 Monomer('IP3R', ['b1', 'b2', 'b3', 'b4', 'bcaer', 'bcacyt'])
 # Calcium 2+, loc: E = ER space, C = cytosol
 Monomer('Ca',['b', 'loc'],{'loc': ['E', 'C']})
-# FRET reporter TN-XXL
-Monomer('TNXXL', ['bca'])
 
 # Annotations
 # ===========
@@ -279,30 +282,66 @@ nM_2AT_to_num = nM_to_num_per_pL * (V_2AT / Vwell) * Vextra.value
 #nM_2AT_to_molec = 1e-9 * V_2AT * N_A
 Parameter('TAT_0', C_2AT*nM_2AT_to_num)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
-# inactive PAR2
-# Alias the pre-coupled PAR2-Gprotein complex
-PAR2_i_Gaq_gdp_Gbg = (PAR2(state='I', btat=None, bgaq=2)**CELL_MEMB %
-                      Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
-                      GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
+# total PAR2
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
 # # tsA201 cells
 # Endogenous receptor density: 1/micrometer^2
 # Overexpressed receptor density: 3,000/micrometer^2
 # From Brinkerhoff et al. 2008: Receptor concentration 2e3 to 2e4 /cell
 Parameter('PAR2_0', 1*SAcell.value)
-Parameter('precouple_fraction', 0.3)
-Expression('PAR2_0_pre', precouple_fraction*PAR2_0)
-Expression('PAR2_0_free', PAR2_0-PAR2_0_pre)
-Initial(PAR2(state='I', btat=None,bgaq=None)**CELL_MEMB, PAR2_0_free)
-Initial(PAR2_i_Gaq_gdp_Gbg, PAR2_0_pre)
 # inactive G-protein heterotrimer Gaq-GDP:Gbg (the beta and gamma units are modeled as a single unit)
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
 # Endogenous G-protein density: 40/micrometer^2
 # Overexpressed G-protein density: 3,000/micrometer^2
 # Brinkerhoff et al. 2008: G-protein concentration 1e4 /cell
 Parameter('Gaq_0', 40*SAcell.value)
-Expression('Gaq_0_free', Max(Gaq_0-PAR2_0_pre,0))
-#Expression('Gaq_0_free', Gaq_0-PAR2_0_pre)
+# Fraction of PAR2 to have G-protein pre-coupled to the receptor
+Parameter('f_precouple', 0.)
+# Number of PAR2 receptors to have G-protein pre-coupled, assuming
+# there is sufficient G-protein.
+Expression('PAR2_0_pre_base', f_precouple*PAR2_0)
+# Pre-coupled G-protein, limited by the total amountof G-protein; Piecewise
+# ensures that the amount of G-protein pre-coupled to receptor is not more than
+# the total amount of G-protein in the cell.
+Expression('Gaq_0_pre', Piecewise((PAR2_0_pre_base, (PAR2_0_pre_base < Gaq_0)), (Gaq_0, (PAR2_0_pre_base >= Gaq_0))))
+# Amount of free uncoupled G-protein
+Expression('Gaq_0_free', (Gaq_0-Gaq_0_pre)) # Max function protects against negative values.
+# Amount of PAR2 that has G-protein pre-coupled accounting for the total amount
+# of G-protein.
+Expression('PAR2_0_pre', Gaq_0_pre)
+# Amount of free uncoupled PAR2
+Expression('PAR2_0_free', (PAR2_0-PAR2_0_pre))
+# Effective pre-coupling fraction when the target fraction would require
+# more G-protein than is available (f_precouple*PAR2_0 > Gaq_0).
+Expression('f_precouple_effective', PAR2_0_pre/PAR2_0)
+# Fraction of PAR2 receptors that are denatured and can't
+# contribute to signaling.
+Parameter('f_denature', 0.) # By default no PAR2 has been denatured.
+# denatured receptors with pre-coupled g-protein.
+Expression('PAR2_0_pre_D', f_denature*PAR2_0_pre)
+# native receptors with pre-coupled g-protein.
+Expression('PAR2_0_pre_I', PAR2_0_pre-PAR2_0_pre_D)
+# denatured receptors that are not pre-coupled.
+Expression('PAR2_0_free_D', f_denature*PAR2_0_free)
+# native receptors that are not pre-coupled.
+Expression('PAR2_0_free_I', (PAR2_0_free-PAR2_0_free_D))
+# native receptors that are not pre-coupled.
+Initial(PAR2(state='I', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_free_I)
+# denatured receptors that are not pre-coupled.
+Initial(PAR2(state='D', bortho=None,bgaq=None)**CELL_MEMB, PAR2_0_free_D)
+# Alias the pre-coupled PAR2-Gprotein complex
+PAR2_i_Gaq_gdp_Gbg = (PAR2(state='I', bortho=None, bgaq=2)**CELL_MEMB %
+                      Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
+                      GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
+# Alias the pre-coupled PAR2-Gprotein complex with denatured PAR2
+PAR2_d_Gaq_gdp_Gbg = (PAR2(state='D', bortho=None, bgaq=2)**CELL_MEMB %
+                      Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
+                      GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
+# native receptors with pre-coupled g-protein.
+Initial(PAR2_i_Gaq_gdp_Gbg, PAR2_0_pre_I)
+# denatured receptors with pre-coupled g-protein.
+Initial(PAR2_d_Gaq_gdp_Gbg, PAR2_0_pre_D)
+
 # Alias the free Gprotein heterotrimer
 Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
 Initial(Gaq_gdp_Gbg, Gaq_0_free)
@@ -370,6 +409,8 @@ Parameter('k_inactivate_PAR2', K_CONVERT/10)
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
 Parameter('kr_PAR2_bind_Gaq', KR_BIND)
+## G-protein unbinding from denatured PAR2
+#Parameter('k_gprot_unbind_PAR2_d', K_CONVERT)
 # Gaq release GDP
 Parameter('k_gdp_release', KR_BIND*100)
 Parameter('k_gdp_bind', KF_BIND)
@@ -434,49 +475,50 @@ Parameter('kdeg_ip3', 1.25)
 # =====
 # 2-step activation of PAR2 by 2AT agonist:
 # Alias the TAT:PAR2 complexes
-tat_PAR2_i = TAT(b=1)**EXTRACELLULAR % PAR2(state='I', btat=1, bgaq=None)**CELL_MEMB
-tat_PAR2_a = TAT(b=1)**EXTRACELLULAR % PAR2(state='A', btat=1, bgaq=None)**CELL_MEMB
+tat_PAR2_i = TAT(b=1)**EXTRACELLULAR % PAR2(state='I', bortho=1, bgaq=None)**CELL_MEMB
+tat_PAR2_a = TAT(b=1)**EXTRACELLULAR % PAR2(state='A', bortho=1, bgaq=None)**CELL_MEMB
 #    2AT + PAR2_I <---> TAT:PAR2_I
-Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', btat=None, bgaq=None)**CELL_MEMB
+Rule('tat_bind_PAR2', TAT(b=None)**EXTRACELLULAR + PAR2(state='I', bortho=None, bgaq=None)**CELL_MEMB
      | tat_PAR2_i, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
 #    TAT:PAR2_I <---> TAT:PAR2_A
 Rule('tat_activate_PAR2', tat_PAR2_i | tat_PAR2_a, k_activate_PAR2, k_inactivate_PAR2)
-
-# Gaq activation by activated-PAR2:
-#    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
+# Alias the complex 2AT:PAR2_I:Gaq:GDP:Gbg
+tat_PAR2_i_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
+                          PAR2(state='I', bortho=1, bgaq=2)**CELL_MEMB %
+                           Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
+                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
 # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
 tat_PAR2_a_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
                            GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
-# PAR2 bindings the G protein heterotrimer
-Rule('par2_bind_gaq', tat_PAR2_a + Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg,
-     kf_PAR2_bind_Gaq,kr_PAR2_bind_Gaq)
-# Pre-coupled PAR2 binding and activation
-# Alias the 2AT bound pre-coupled but inactive PAR2-Gprotein complex 2AT:PAR2_A:Gaq:GDP:Gbg
-tat_PAR2_i_Gaq_gdp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='I', btat=1, bgaq=2)**CELL_MEMB %
-                           Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
-                           GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
-
 #    2AT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg
 Rule('tat_bind_PAR2_pre', TAT(b=None)**EXTRACELLULAR + PAR2_i_Gaq_gdp_Gbg
      | tat_PAR2_i_Gaq_gdp_Gbg, kf_PAR2_bind_TAT,kr_PAR2_bind_TAT)
 #    TAT:PAR2_I:Gaq:GDB:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
 Rule('tat_activate_PAR2_pre', tat_PAR2_i_Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg, k_activate_PAR2, k_inactivate_PAR2)
 
+# Gaq activation by activated-PAR2:
+#    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I ---> PAR2_A + Gaq_A
+
+# PAR2 bindings the G protein heterotrimer
+Rule('par2_bind_gaq', tat_PAR2_a + Gaq_gdp_Gbg | tat_PAR2_a_Gaq_gdp_Gbg,
+     kf_PAR2_bind_Gaq,kr_PAR2_bind_Gaq)
+# G-protein heterotrimer can unbind from denatured PAR2 - assume the rate
+# is the same as the dissociation rate for G-prot to the active PAR2 receptor.
+Rule('gprot_unbind_PAR2_d', PAR2_d_Gaq_gdp_Gbg >> PAR2(bortho=None, bgaq=None, state='D')**CELL_MEMB + Gaq_gdp_Gbg, kr_PAR2_bind_Gaq)
+
 # Alias the complex  2AT:PAR2_A:Gaq:Gbg
 tat_PAR2_a_Gaq_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=None, bgbg=4)**CELL_MEMB %
                            Gbg(b=4)**CELL_MEMB)
-
 # GDP unbinds from Gaq
 Rule('gaq_releases_gdp',tat_PAR2_a_Gaq_gdp_Gbg | tat_PAR2_a_Gaq_Gbg +
      GDP(b=None)**CYTOSOL, k_gdp_release, k_gdp_bind)
 # Alias the complex 2AT:PAR2_A:Gaq:GTP:Gbg
 tat_PAR2_a_Gaq_gtp_Gbg = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=4)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB)
 # GTP binds to Gaq
@@ -484,7 +526,7 @@ Rule('gaq_binds_gtp', tat_PAR2_a_Gaq_Gbg + GTP(b=None)**CYTOSOL |
     tat_PAR2_a_Gaq_gtp_Gbg, k_gtp_bind, k_gtp_release)
 # Alias the complex 2AT:PAR2_A:Gaq:GTP
 tat_PAR2_a_Gaq_gtp = (TAT(b=1)**EXTRACELLULAR %
-                          PAR2(state='A', btat=1, bgaq=2)**CELL_MEMB %
+                          PAR2(state='A', bortho=1, bgaq=2)**CELL_MEMB %
                            Gaq(bpar=2, bgdp=3, bgbg=None)**CELL_MEMB %
                            GTP(b=3)**CELL_MEMB)
 # The Beta-Gamma G protein units unbind from Gaq
@@ -568,8 +610,7 @@ Rule('transport_Ca_ER_CYTO',
 # Degradation of Cytosolic Ca2+ --
 # This term was added to help fit the decay of FRET signal, presumably
 # representing a lumped process for the regulation of Ca2+ concentration in the
-# cytosol after the ER store is released (e.g., activation of
-# SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
+# cytosol after the ER store is released (e.g., activation of cell membrane ion
 # channels to release excess Ca2+ into the extracellular space).
 degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 
@@ -595,6 +636,8 @@ Observable('totCa', Ca())
 Observable('iPAR2', PAR2(state='I'))
 # Active PAR2
 Observable('aPAR2', PAR2(state='A'))
+# Denatured PAR2
+Observable('dPAR2', PAR2(state='D'))
 # Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
 # Fully inactive IP3R (i.e., no IP3 bound)
@@ -622,4 +665,3 @@ Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL 
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
 #print(Frc_base.get_value())
-Observable('free_Gaq', Gaq_gdp_Gbg)
