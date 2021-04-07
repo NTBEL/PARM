@@ -280,6 +280,7 @@ Parameter('TAT_0', C_2AT*nM_2AT_to_num)
 Initial(TAT(b=None)**EXTRACELLULAR, TAT_0)
 nM_Ant_to_num = nM_to_num_per_pL * Vextra.value
 Parameter('Ant_0', 100*nM_Ant_to_num) # Just set a nominal value of 100 nM
+Initial(Ant(b=None)**EXTRACELLULAR, Ant_0)
 # total PAR2
 # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
 # # tsA201 cells
