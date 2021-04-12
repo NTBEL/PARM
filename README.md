@@ -9,8 +9,8 @@ PARM contains rules-based models of PAR2 (proteinase-activated receptor isoform 
 ## Models in PARM
 PARM currently contains 4 model variants which encode alternative hypotheses for PAR2 activation and the GPCR/G-protein activation mechanisms:
 
-  * `parm.classic_1` - Single-state PAR2 activation (R + L <---> RL*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
-  * `parm.classic_2` - Two-state PAR2 activation (R + L <---> RL <---> RL*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_1` - Single-state PAR2 activation (L + R <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_2` - Two-state PAR2 activation (L + R <---> LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
   * `parm.precoupled_1` - Single-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
   * `parm.precoupled_2` - Two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
 
