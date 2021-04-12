@@ -91,3 +91,16 @@ def kang2019_fig_2f():
             norm_drr.append(dict({'LaserEnergy':f, 'PulseNumber':pn, 'NormPeakdRR':n_drr, 'NormPeakdRR_err':n_drr_err}))
 
     return pd.DataFrame(norm_drr)
+
+def kang2019_fig_s3d():
+    df = training_data()
+    concs = ['10', '31.6', '100', '316', '1000', '3160']
+    dat = list()
+    for c in concs:
+        idx_max = df[c+'_sig'].argmax()
+        max_dr = df[c+'_sig'][idx_max]
+        max_dr_err = df[c+'_err'][idx_max]
+        #print(idx_max, max_dr, max_dr_err)
+        dat.append(dict({'[2AT]':float(c), 'Max.dRR':max_dr, 'Max.dRR_err':max_dr_err}))
+    dat = pd.DataFrame(dat)
+    return dat
