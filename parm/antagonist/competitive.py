@@ -293,7 +293,7 @@ Parameter('k_inactivate_PAR2', K_CONVERT/10)
 Parameter('kf_PAR2_bind_Ant', (1000 / microM_to_num_per_pL) * Vextra.value)
 # For nominal value just assume Kd is 100 nM
 Parameter('Kd_PAR2_bind_Ant', 100*nM_to_num_per_pL*Vextra.value)
-Expression('kr_PAR2_bind_Ant', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
+Expression('kr_PAR2_bind_Ant', Kd_PAR2_bind_Ant*kf_PAR2_bind_Ant)
 
 # Gaq binding activated-PAR2
 Parameter('kf_PAR2_bind_Gaq', KF_BIND)
