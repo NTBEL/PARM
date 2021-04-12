@@ -290,7 +290,7 @@ Parameter('k_inactivate_PAR2', K_CONVERT/10)
 
 # Antagonist binding to PAR2
 # 'Diffusion limited' forward rate of 1000 1/s*microM used in CORM https://github.com/LoLab-VU/CORM
-Parameter('kf_PAR2_bind_Ant', (1000 / microM_to_num_per_pL) * Vextra.value)
+Parameter('kf_PAR2_bind_Ant', (1000 / microM_to_num_per_pL) / Vextra.value)
 # For nominal value just assume Kd is 100 nM
 Parameter('Kd_PAR2_bind_Ant', 100*nM_to_num_per_pL*Vextra.value)
 Expression('kr_PAR2_bind_Ant', Kd_PAR2_bind_Ant*kf_PAR2_bind_Ant)
