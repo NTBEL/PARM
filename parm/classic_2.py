@@ -573,14 +573,29 @@ Observable('iPAR2', PAR2(state='I'))
 Observable('aPAR2', PAR2(state='A'))
 # Denatured PAR2
 Observable('dPAR2', PAR2(state='D'))
+# Ro
+Expression("Ro", iPAR2 + aPAR2)
+# RL
+Observable("LR", tat_PAR2_i)
+Expression("occupancy_ratio", LR/Ro)
+Expression("active_ratio", aPAR2/Ro)
+Observable("aGaq_i", Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GTP(b=3)**CELL_MEMB)
+Observable("aGaq_ii", tat_PAR2_a_Gaq_gtp)
+Observable("aGaq_iii", Gaq_gtp_RGS)
+Observable("aGaq_iv", Gaq_gtp_PLC)
+Expression("aGaq", aGaq_i + aGaq_ii + aGaq_iii + aGaq_iv)
+Expression("active_G_ratio", aGaq/totGaq)
 # Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
+Expression('active_IP3R_ratio', aIP3R / totIP3R)
 # Fully inactive IP3R (i.e., no IP3 bound)
 Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
 # The Ca2+ in the ER Lumen
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Ca2+ in the Cytosol
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
+Expression('Ca_num_to_nM', 1/(Vcell*nM_to_num_per_pL))
+Expression('cytoCa_nM', (cytoCa+Ca_C_0) * Ca_num_to_nM)
 # Get the FRET signal
 # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
 # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
