@@ -1,5 +1,4 @@
 '''PARM: PAR2 Activation-driven calcium Release Model
-
 PARM is a mechanistic mass action model of PAR2 activation and downstream
 calcium signaling via the phospholipase C and IP3 pathway. The model was
 designed to mathematically model the underlying signaling dynamics
@@ -8,7 +7,6 @@ described in:
 Kang et al.,  Transient Photoinactivation of Cell Membrane Protein Activity
 without Genetic Modification by Molecular Hyperthermia, ACS Nano 2019, 13, 11,
 12487–12499 https://doi.org/10.1021/acsnano.9b01993
-
 PAR2 activation and subsequent G-protein activation are modeled after the
 Classical GPCR/G-protein activation model (e.g., see Fig 2A of Oliveira et al.
 https://doi.org/10.3389/fnagi.2019.00089) in which G-protein heterotrimers
@@ -31,10 +29,8 @@ a  baseline constant concentration of Ca2+ (nominally 100 nM) which is included
 when computing the FRET ratio. Spefically, in this version of the model the
 FRET ratio for cytosolic Ca2+ is estimated by using the Hill equation with
 parameters from the dose-repsonse curve of TN-XXL to Ca2+.
-
 The full set of interactions and sequence of rules included in the model are as
 follows:
-
   1. Two-state receptor activation of PAR2 by 2AT:
       2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
   2. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
@@ -75,8 +71,6 @@ follows:
        Ca_C ---> None,  if Ca_C > Ca_C_0
   10. Degradation of IP3
        IP3 ---> None
-
-
 Unless otherwise noted the units used are:
     Volume : pL
     Area: micrometer^2
