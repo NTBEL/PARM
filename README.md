@@ -7,16 +7,18 @@ PARM contains rules-based models of PAR2 (proteinase-activated receptor isoform 
 
 
 ## Models in PARM
-PARM currently contains 4 model variants which encode alternative hypotheses for PAR2 activation and the GPCR/G-protein activation mechanisms:
+PARM currently contains 6 model variants which encode alternative hypotheses for PAR2 activation and the GPCR/G-protein activation mechanisms:
 
   * `parm.classic_1` - Single-state PAR2 activation (L + R <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
-  * `parm.classic_2` - Two-state PAR2 activation (L + R <---> LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_2m` - Minimal two-state PAR2 activation (L + R <---> LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_2f` - Full two-state PAR2 activation (R <---> R*, L + R <---> LR, L + R* <---> LR*, LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.  
   * `parm.precoupled_1` - Single-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
-  * `parm.precoupled_2` - Two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.precoupled_2m` - Minimal two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.precoupled_2f` - Full two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
 
 We refer you to Fig 2 of Oliveira et al. [https://doi.org/10.3389/fnagi.2019.00089](https://doi.org/10.3389/fnagi.2019.00089) for a schematic depicting the main elements of the classic and pre-coupled GPCR/G-protein activation mechanisms.
 
-Additionally, PARM contains 2 extensions of the `parm.classic_2` model which incorporate an antagonist:
+Additionally, PARM contains 2 extensions of the `parm.classic_2m` model which incorporate an antagonist:
 
   * `parm.antagonist.competitive` - Classic GPCR/G-protein activation mechanism with a competitive antagonist.
   * `parm.antagonist.noncompetitive` - Classic GPCR/G-protein activation mechanism with a noncompetitive antagonist which operates via negative allosteric modulation of the agonist binding affinity. (Note: The factor which controls the allosteric modulation could also be set such that the antagonist induces positive allosteric modulation, increasing agonist binding affinity.)
