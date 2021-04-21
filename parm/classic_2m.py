@@ -330,10 +330,17 @@ Initial(IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None)**ER_ME
 # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
 # around 525 microM as reported in
 # Foyouzi-Youssefi et al. https://doi.org/10.1073/pnas.97.11.5723 (Fig. 3C, control)
-Parameter('Ca_0', 525*microM_to_num_per_pL*Ver.value)
-Initial(Ca(loc='E', b=None)**ER_LUMEN, Ca_0)
-Parameter('Ca_C_0', 100*nM_to_num_per_pL*Vcell.value)
-#Initial(Ca(loc='E', b=None)**CYTOSOL, Ca_C_0)
+Parameter('erCa_0', 525*microM_to_num_per_pL*Ver.value)
+Initial(Ca(loc='E', b=None)**ER_LUMEN, erCa_0)
+# Resting cytosolic Ca2+ of 97 +- 5 nM as reported for HEK-293 cells in
+# Tong et al. 1999 https://doi.org/10.1074/jbc.274.2.693
+Parameter('cytoCa_0', 97*nM_to_num_per_pL*Vcell.value)
+Initial(Ca(loc='E', b=None)**CYTOSOL, cytoCa_0)
+# Kang et al. 2019, cells are exposed to artificial cerebral spinal fluid (ACSF)
+# which has 3.1 mM CaCl_2.
+# 3.1 mM ---> 3.1e3 microM
+Parameter('extraCa_0', 3.1e3*microM_to_num_per_pL*Vextra.value)
+Initial(Ca(loc='E', b=None)**EXTRACELLULAR, extraCa_0)
 
 # Kinetic Parameters
 # ==================
@@ -347,7 +354,7 @@ Parameter('kf_PAR2_bind_TAT', KF_BIND)
 # Since 2AT has EC50 = 101.8 nM in Hek 293 cells its probably safe to
 # assume that the Kd for 2AT is somewhere between those two compounds.
 # 142 = (430-38)/(296-16) *101.5
-Parameter('Kd_PAR2_bind_TAT', 142*nM_to_num_per_pL*Vcell.value)
+Parameter('Kd_PAR2_bind_TAT', 142*nM_to_num_per_pL*Vextra.value)
 Expression('kr_PAR2_bind_TAT', Kd_PAR2_bind_TAT*kf_PAR2_bind_TAT)
 Parameter('k_activate_PAR2', K_CONVERT*10)
 Parameter('k_inactivate_PAR2', K_CONVERT/10)
@@ -406,9 +413,28 @@ Parameter('kcat_tranport_erCa', 525)
 #Parameter('kr_cytCa_bind_IP3R', KR_BIND*10)
 #Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 
-# Depletion of Cytosolic Ca2+
-# Base rate
-Parameter('kdeg_cytCa', K_DEGRADE) # 1/s
+# Regulation of Cytosolic Ca2+
+# Amount of Ca2+ in the Cytosol
+Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
+# Amount of Ca2+ in the extracellular space
+Observable('extraCa', Ca(loc='E', b=None)**EXTRACELLULAR)
+# Model pump rates using Michaelis-Menten kinetics
+# Some Ca2+ gets pumped back into the ER
+#    20 microM/s - nominal value of maximum Ca uptake rate by SERCA
+#    from Flaherty et al. 2008 https://doi.org/10.1371/journal.pcbi.1000185
+Parameter('Vmax_ca_cyto_to_er', 20 * microM_to_num_per_pL * Vcell.value)
+#    0.65 microM - nominal value of activation constant for SERCA
+#    from Flaherty et al. 2008
+Parameter('Km_ca_cyto_to_er', 0.65 * microM_to_num_per_pL * Vcell.value)
+Expression('k_ca_cyto_to_er', Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa) ) # 1/s
+# Some Ca2+ get pumped into the extracellular space
+Parameter('Vmax_ca_cyto_to_extra', 40 * microM_to_num_per_pL * Vcell.value) # 40 microM/s
+Parameter('Km_ca_cyto_to_extra', 1 * microM_to_num_per_pL * Vcell.value) # 1 microM
+Expression('k_ca_cyto_to_extra', Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa) ) # 1/s
+# Some Ca2+ gets pumped into the cytosol from the extracellular space
+Parameter('Vmax_ca_extra_to_cyto', 1 * microM_to_num_per_pL * Vcell.value) # 1 microM/s
+Parameter('Km_ca_extra_to_cyto', 1e4 * microM_to_num_per_pL * Vextra.value) # 0.01 nM
+Expression('k_ca_extra_to_cyto', Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa) ) # 1/s
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
@@ -535,13 +561,17 @@ Rule('transport_Ca_ER_CYTO',
      IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL %
      IP3(b=4)**CYTOSOL + Ca(loc='E', b=None)**CYTOSOL, kcat_tranport_erCa)
 
-# Degradation of Cytosolic Ca2+ --
-# This term was added to help fit the decay of FRET signal, presumably
-# representing a lumped process for the regulation of Ca2+ concentration in the
-# cytosol after the ER store is released (e.g., activation of
-# SERCA to pump Ca2+ back into the lumen, or activation of cell membrane ion
-# channels to release excess Ca2+ into the extracellular space).
-degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
+# Regulation of Cytosolic Ca2+ --
+# These term were added to help fit the decay of FRET signal, assuming that
+# reduction of cytosolic Ca2+ following the transient spike is the largest
+# contributor to the return towards baseline.
+# 1. pump Ca back into the ER lumen; e.g. SERCA to pump Ca2+ back into the lumen
+Rule('pump_cytCa_to_ER', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**ER_LUMEN, k_ca_cyto_to_er)
+# 2. pump Ca into the extracellular space; e.g., cell membrane ion
+# channels to release excess Ca2+ into the extracellular space.
+Rule('pump_cytCa_to_EXTRA', Ca(loc='E', b=None)**CYTOSOL >> Ca(loc='E', b=None)**EXTRACELLULAR, k_ca_cyto_to_extra)
+# 3. some Ca gets re-pumped from the extracellular space back into the cytosol.
+Rule('pump_extCa_to_CYT', Ca(loc='E', b=None)**EXTRACELLULAR >> Ca(loc='E', b=None)**CYTOSOL, k_ca_extra_to_cyto)
 
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
@@ -561,6 +591,8 @@ Observable('totPIP2', PIP2())
 Observable('totIP3', IP3())
 Observable('totIP3R', IP3R())
 Observable('totCa', Ca())
+# Amount of (free) Ca2+ in the ER
+Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Inactive PAR2
 Observable('iPAR2', PAR2(state='I'))
 # Active PAR2
@@ -587,7 +619,6 @@ Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
 # The Ca2+ in the ER Lumen
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Ca2+ in the Cytosol
-Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 Expression('Ca_num_to_nM', 1/(Vcell*nM_to_num_per_pL))
 Expression('cytoCa_nM', (cytoCa+Ca_C_0) * Ca_num_to_nM)
 # Get the FRET signal
