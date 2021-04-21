@@ -68,7 +68,7 @@ follows:
    ii) Reverse, cytosol to ER:  | Assuming the transport is not just one way.
        IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
   9. Degradation of Cytosolic Calcium
-       Ca_C ---> None,  if Ca_C > Ca_C_0
+       Ca_C ---> None,  if Ca_C > erCa_0
   10. Degradation of IP3
        IP3 ---> None
 Unless otherwise noted the units used are:
@@ -591,8 +591,7 @@ Observable('totPIP2', PIP2())
 Observable('totIP3', IP3())
 Observable('totIP3R', IP3R())
 Observable('totCa', Ca())
-# Amount of (free) Ca2+ in the ER
-Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
+
 # Inactive PAR2
 Observable('iPAR2', PAR2(state='I'))
 # Active PAR2
@@ -620,7 +619,10 @@ Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
 Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Ca2+ in the Cytosol
 Expression('Ca_num_to_nM', 1/(Vcell*nM_to_num_per_pL))
-Expression('cytoCa_nM', (cytoCa+Ca_C_0) * Ca_num_to_nM)
+Expression('cytoCa_nM', cytoCa * Ca_num_to_nM)
+Expression('Ca_num_to_microM', 1/(Vcell*microM_to_num_per_pL))
+Expression('cytoCa_microM', cytoCa * Ca_num_to_microM)
+Expression('cytoCa_0_microM', cytoCa_0 * Ca_num_to_microM)
 # Get the FRET signal
 # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
 # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
@@ -632,11 +634,12 @@ Parameter('HillCoeff_TNXXL', 1.5)
 #    (R-Rmin)/Rmin = Rmax*[Ca2+]**h / (Kd + [Ca2+]**h) ,
 #       where Rmax is maximum FRET ratio change at saturation, h is the
 #       Hill Coefficient, and Kd is effective dissociation constant.
-Expression('Ca_num_to_microM', 1/(Vcell*microM_to_num_per_pL))
+
 # FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
-Expression('Frc_base', Rmax*(Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (Ca_C_0*Ca_num_to_microM)**HillCoeff_TNXXL))
+Expression('Frc_base', (Rmax*cytoCa_0_microM**HillCoeff_TNXXL) / (Kd_cytCa_bind_TNXXL + cytoCa_0_microM**HillCoeff_TNXXL))
 # FRET ratio change for current concentration relative to zero - dR/R = (Rc-Rmin)/Rmin
-Expression('Frc_curr', Rmax*((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + ((cytoCa+Ca_C_0)*Ca_num_to_microM)**HillCoeff_TNXXL))
+Expression('Frc_curr', (Rmax*cytoCa_microM**HillCoeff_TNXXL) / (Kd_cytCa_bind_TNXXL + cytoCa_microM**HillCoeff_TNXXL))
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
 Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
+#Expression('FRET', Rmax*HillCoeff_TNXXL)
 #print(Frc_base.get_value())
