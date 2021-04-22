@@ -426,24 +426,28 @@ Parameter('Vmax_ca_cyto_to_er', 20 * microM_to_num_per_pL * Vcell.value)
 #    0.65 microM - nominal value of activation constant for SERCA
 #    from Flaherty et al. 2008
 Parameter('Km_ca_cyto_to_er', 0.65 * microM_to_num_per_pL * Vcell.value)
-#Expression('k_ca_cyto_to_er', Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa) ) # 1/s
+Expression('k_ca_cyto_to_er', Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa) ) # 1/s
 # Shifted with piecewise to make sure when cytoCa <= cytoCa_0 the rate is zero,
 # assuming cytoCa_0 is the resting steady-state concentration of Ca2+ in the cytosol.
-Expression('k_ca_cyto_to_er', ((Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa)) - (Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa_0))) * (cytoCa > cytoCa_0) ) # 1/s
+#Expression('k_ca_cyto_to_er', ((Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa)) - (Vmax_ca_cyto_to_er / (Km_ca_cyto_to_er + cytoCa_0))) * (cytoCa > cytoCa_0) ) # 1/s
 # Some Ca2+ get pumped into the extracellular space
 Parameter('Vmax_ca_cyto_to_extra', 40 * microM_to_num_per_pL * Vcell.value) # 40 microM/s
 Parameter('Km_ca_cyto_to_extra', 1 * microM_to_num_per_pL * Vcell.value) # 1 microM
-#Expression('k_ca_cyto_to_extra', Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa) ) # 1/s
+Expression('k_ca_cyto_to_extra', Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa) ) # 1/s
 # Shifted with piecewise to make sure when cytoCa <= cytoCa_0 the rate is zero,
 # assuming cytoCa_0 is the resting steady-state concentration of Ca2+ in the cytosol.
-Expression('k_ca_cyto_to_extra', ((Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa)) - (Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa))) * (cytoCa > cytoCa_0) ) # 1/s
+#Expression('k_ca_cyto_to_extra', ((Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa)) - (Vmax_ca_cyto_to_extra / (Km_ca_cyto_to_extra + cytoCa))) * (cytoCa > cytoCa_0) ) # 1/s
 # Some Ca2+ gets pumped into the cytosol from the extracellular space
 Parameter('Vmax_ca_extra_to_cyto', 1 * microM_to_num_per_pL * Vcell.value) # 1 microM/s
 Parameter('Km_ca_extra_to_cyto', 1e4 * microM_to_num_per_pL * Vextra.value) # 0.01 nM
-#Expression('k_ca_extra_to_cyto', Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa) ) # 1/s
+Expression('k_ca_extra_to_cyto', Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa) ) # 1/s
 # Shifted with piecewise to make sure when extraCa <= extraCa_0 the rate is zero,
 # assuming extraCa_0 is the resting steady-state concentration of Ca2+ in the extracellular space.
-Expression('k_ca_extra_to_cyto', ((Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa)) - (Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa))) * (extraCa > extraCa_0) ) # 1/s
+#Expression('k_ca_extra_to_cyto', ((Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa)) - (Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa))) * (extraCa > extraCa_0) ) # 1/s
+# Some Ca2+ get pumped into the cytosol from the ER
+Parameter('Vmax_ca_er_to_cyto', 1 * microM_to_num_per_pL * Vcell.value) # 1 microM/s
+Parameter('Km_ca_er_to_cyto', 1000 * microM_to_num_per_pL * Vcell.value) # 1000 microM
+Expression('k_ca_er_to_cyto', Vmax_ca_er_to_cyto / (Km_ca_er_to_cyto + erCa) ) # 1/s
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
