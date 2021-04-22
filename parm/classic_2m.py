@@ -418,6 +418,8 @@ Parameter('kcat_tranport_erCa', 525)
 Observable('cytoCa', Ca(loc='E', b=None)**CYTOSOL)
 # Amount of Ca2+ in the extracellular space
 Observable('extraCa', Ca(loc='E', b=None)**EXTRACELLULAR)
+# The Ca2+ in the ER Lumen
+Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
 # Model pump rates using Michaelis-Menten kinetics
 # Some Ca2+ gets pumped back into the ER
 #    20 microM/s - nominal value of maximum Ca uptake rate by SERCA
@@ -628,8 +630,7 @@ Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % 
 Expression('active_IP3R_ratio', aIP3R / totIP3R)
 # Fully inactive IP3R (i.e., no IP3 bound)
 Observable('iIP3R', IP3R(b1=None,b2=None,b3=None,b4=None))
-# The Ca2+ in the ER Lumen
-Observable('erCa', Ca(loc='E', b=None)**ER_LUMEN)
+
 # Ca2+ in the Cytosol
 Expression('Ca_num_to_nM', 1/(Vcell*nM_to_num_per_pL))
 Expression('cytoCa_nM', cytoCa * Ca_num_to_nM)
