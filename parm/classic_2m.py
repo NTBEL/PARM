@@ -443,7 +443,7 @@ Parameter('Km_ca_extra_to_cyto', 1e4 * microM_to_num_per_pL * Vextra.value) # 0.
 #Expression('k_ca_extra_to_cyto', Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa) ) # 1/s
 # Shifted with piecewise to make sure when extraCa <= extraCa_0 the rate is zero,
 # assuming extraCa_0 is the resting steady-state concentration of Ca2+ in the extracellular space.
-Expression('k_ca_cyto_to_extra', ((Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa)) - (Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa))) * (extraCa > extraCa_0) ) # 1/s
+Expression('k_ca_extra_to_cyto', ((Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa)) - (Vmax_ca_extra_to_cyto / (Km_ca_extra_to_cyto + extraCa))) * (extraCa > extraCa_0) ) # 1/s
 
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
