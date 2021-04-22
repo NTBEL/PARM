@@ -636,10 +636,10 @@ Parameter('HillCoeff_TNXXL', 1.5)
 #       Hill Coefficient, and Kd is effective dissociation constant.
 
 # FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
-Expression('Frc_base', (Rmax*cytoCa_0_microM**HillCoeff_TNXXL) / (Kd_cytCa_bind_TNXXL + cytoCa_0_microM**HillCoeff_TNXXL))
+Expression('Frc_baseb', Rmax*(cytoCa_0_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (cytoCa_0_microM)**HillCoeff_TNXXL))
 # FRET ratio change for current concentration relative to zero - dR/R = (Rc-Rmin)/Rmin
-Expression('Frc_curr', (Rmax*cytoCa_microM**HillCoeff_TNXXL) / (Kd_cytCa_bind_TNXXL + cytoCa_microM**HillCoeff_TNXXL))
+Expression('Frc_curr', Rmax*(cytoCa_microM)**HillCoeff_TNXXL / (Kd_cytCa_bind_TNXXL + (cytoCa_microM)**HillCoeff_TNXXL))
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
-Expression('FRET', (Frc_curr - Frc_base)/(Frc_base + 1))
-#Expression('FRET', Rmax*HillCoeff_TNXXL)
+Expression('FRET', (Frc_curr - Frc_baseb)/(Frc_baseb + 1))
+#Expression('FRET', LR - Frc_baseb)
 #print(Frc_base.get_value())
