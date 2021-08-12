@@ -426,6 +426,9 @@ Gaq_gdp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GDP(b=3)**CELL_MEMB)
 Rule('par2_activate_Gaq', tat_PAR2_a + Gaq_gdp_Gbg >>
                           tat_PAR2_a + Gaq_gtp + Gbg(b=None)**CELL_MEMB,
                           kcat_PAR2_activate_Gaq)
+Annotation(par2_activate_Gaq,
+           'https://identifiers.org/doi:10.1073/pnas.1834247100',
+            predicate='isDerivedFrom')
 
 # Gaq can (slowly) hydolyze GTP to GDP
 Rule('gtp_hydrolosis_auto', Gaq_gtp >> Gaq_gdp, k_gtp_to_gdp_auto)
