@@ -442,7 +442,8 @@ Parameter('kdeg_ip3', 1.25)
 # Synthesis of PIP2
 # Start with 8e-3 1/s is the value for IP5 -> PIP2 from Table S2 of
 # Flaherty et al. 2008 https://doi.org/10.1371/journal.pcbi.1000185
-Parameter('ksynth_pip2', 8e-3)
+#Parameter('ksynth_pip2', 8e-3)
+
 
 # Rules
 # =====
@@ -719,7 +720,7 @@ degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
 # Metabolic production of PIP2
-synthesize(PIP2(b=None)**CELL_MEMB, ksynth_pip2)
+#synthesize(PIP2(b=None)**CELL_MEMB, ksynth_pip2)
 
 # Observables
 # ===========
@@ -757,6 +758,7 @@ Observable("aGaq_iii", Gaq_gtp_RGS)
 Observable("aGaq_iv", Gaq_gtp_PLC)
 Expression("aGaq", aGaq_i + aGaq_ii + aGaq_iib + aGaq_iic + aGaq_iid + aGaq_iii + aGaq_iv)
 Expression("active_G_ratio", aGaq/totGaq)
+Observable("freeGTP", GTP(b=None) ** CYTOSOL)
 # Active IP3R (i.e., all 4 subunits bound by IP3)
 Observable('aIP3R', IP3R(b1=1, b2=2, b3=3, b4=4)**ER_MEMB % IP3(b=1)**CYTOSOL % IP3(b=2)**CYTOSOL % IP3(b=3)**CYTOSOL % IP3(b=4)**CYTOSOL)
 Expression('active_IP3R_ratio', aIP3R / totIP3R)
