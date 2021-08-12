@@ -568,7 +568,7 @@ degrade(Ca(loc='E', b=None)**CYTOSOL, kdeg_cytCa)
 # Metabolic consumption of IP3
 degrade(IP3(b=None)**CYTOSOL, kdeg_ip3)
 # Metabolic production of PIP2
-synthesize(PIP2(b=None)**CELL_MEMB, ksynth_pip2)
+#synthesize(PIP2(b=None)**CELL_MEMB, ksynth_pip2)
 
 # Observables
 # ===========
