@@ -7,14 +7,16 @@ PARM contains rules-based models of PAR2 (proteinase-activated receptor isoform 
 
 
 ## Models in PARM
-PARM currently contains 6 model variants which encode alternative hypotheses for PAR2 activation and the GPCR/G-protein activation mechanisms:
+PARM currently contains 8 model variants which encode alternative hypotheses for PAR2 activation and the GPCR/G-protein activation mechanisms:
 
-  * `parm.classic_1` - Single-state PAR2 activation (L + R <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
-  * `parm.classic_2m` - Minimal two-state PAR2 activation (L + R <---> LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
-  * `parm.classic_2f` - Full two-state PAR2 activation (R <---> R*, L + R <---> LR, L + R* <---> LR*, LR <---> LR*) and classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.  
-  * `parm.precoupled_1` - Single-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
-  * `parm.precoupled_2m` - Minimal two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
-  * `parm.precoupled_2f` - Full two-state PAR2 activation and pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.classic_1` - Single-state PAR2 activation (L + R <---> LR*) and a classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_2m` - Minimal two-state PAR2 activation (L + R <---> LR <---> LR*) and a classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.
+  * `parm.classic_2f` - Full two-state PAR2 activation (R <---> R*, L + R <---> LR, L + R* <---> LR*, LR <---> LR*) and a classic GPCR/G-protein activation mechanism: G-protein heterotrimers only interact with the receptor after receptor-activation.  
+  * `parm.precoupled_1` - Single-state PAR2 activation and a pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.precoupled_2m` - Minimal two-state PAR2 activation and a pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.precoupled_2f` - Full two-state PAR2 activation and a pre-coupled GPCR/G-protein activation mechanism: A pre-defined fraction of receptors are initialized with G-protein heterotrimers pre-coupled to the receptor.
+  * `parm.catalytic_1` - Single-state PAR2 activation with a single-step catalytic activation of G-protein by activated-PAR2.
+  * `parm.catalytic_23` - Full two-state PAR2 activation with a 5-step catalytic bi-ter ping-pong mechanism for the activation of G-protein (by both inactive and active PAR2). Note that this model may have trouble equilibrating to a steady-state in the abscence of agonist 2AT because the G-protein can be still be activated PAR2; as such, GTP can be slowly consumed, and there is no rule to replace GTP once it is consumed. Ca2+ can also be released to the cytosol and removed from the cell under these conditions.      
 
 We refer you to Fig 2 of Oliveira et al. [https://doi.org/10.3389/fnagi.2019.00089](https://doi.org/10.3389/fnagi.2019.00089) for a schematic depicting the main elements of the classic and pre-coupled GPCR/G-protein activation mechanisms.
 
