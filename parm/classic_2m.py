@@ -514,7 +514,7 @@ degrade(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_I_degradati
 degrade(tat_PAR2_i, k_PAR2_bound_degradation)
 degrade(tat_PAR2_a, k_PAR2_bound_degradation)
 degrade(
-    PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB, k_par2_denatured_degradation
+    PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_denatured_degradation
 )
 
 # 2-step activation of PAR2 by 2AT agonist:
