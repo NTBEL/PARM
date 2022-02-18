@@ -148,7 +148,7 @@ Parameter("Vcm", SAcell.value*CMthickness.value*cubicmicron_to_pL)
 # However, we'll just set the effective extracellular reaction volume to be on par
 # (pun not intended, but acknowledged) with the cellular volume to avoid overly large
 # numbers of agonist molecules.
-Parameter("Vextra", Vcell.value)
+Parameter("Vextra", Vcell.value*10)
 
 # Volume of the ER lumen/cisternal space.
 # It is often >10% of cell volume according Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
