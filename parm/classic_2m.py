@@ -398,7 +398,7 @@ Parameter("k_PAR2_synthesis", 4)
 # assumption that at equilibrium the net rate of PAR2_I change due to synthesis
 # and degradation is zero in the abscence of agonist or any PAR2 denaturation by
 # MH.
-Expression("k_PAR2_I_degradation", k_par2_synthesis / PAR2_0)
+Expression("k_PAR2_I_degradation", k_PAR2_synthesis / PAR2_0)
 # rate constant for ligand-bound receptor degradation from
 # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
 # used in yeast G-protein cycle model is: 4x10^-3 1/s
