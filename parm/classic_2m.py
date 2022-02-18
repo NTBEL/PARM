@@ -507,7 +507,7 @@ tat_PAR2_a = (
 )
 
 # PAR2 synthesis
-synthesize(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_par2_synthesis)
+synthesize(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_synthesis)
 
 # PAR2 degradation
 degrade(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_I_degradation)
