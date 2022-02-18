@@ -147,7 +147,7 @@ cubicmicron_to_pL = (1e-4) ** 3 * 1e-3 * 1e12
 
 Model()
 
-# Cellular volume, 10^-12 L as assumed in
+# Cellular volume, 1 pL (or 10^-12 L) as assumed in
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 Parameter("Vcell", 1)
 # Cell-membrane surface area
@@ -386,6 +386,7 @@ Initial(Ca(loc="E", b=None) ** CYTOSOL, Ca_C_0)
 # CaCl2, so extracellular Ca2+ should be around 3.1 mM.
 # Kang et al. https://doi.org/10.1021/acsnano.9b01993
 Parameter("Ca_extra_0", 3.1 * 1e3 * microM_to_num_per_pL * Vextra.value)
+Initial(Ca(loc="E", b=None) ** EXTRACELLULAR, Ca_extra_0)
 
 # Kinetic Parameters
 # ==================
@@ -393,11 +394,12 @@ Parameter("Ca_extra_0", 3.1 * 1e3 * microM_to_num_per_pL * Vextra.value)
 # rate of receptor synthesis from
 # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
 # used in yeast G-protein cycle model is: 4 number/s
-Parameter("k_PAR2_synthesis", 4)
+Parameter("k_PAR2_synthesis", 4 / Vcm.value)
 # Rate constant for degradation of PAR_I - Use an expression to enforce the
 # assumption that at equilibrium the net rate of PAR2_I change due to synthesis
 # and degradation is zero in the abscence of agonist or any PAR2 denaturation by
 # MH.
+# Parameter('k_PAR2_I_degradation', 0)
 Expression("k_PAR2_I_degradation", k_PAR2_synthesis / PAR2_0)
 # rate constant for ligand-bound receptor degradation from
 # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
@@ -489,8 +491,9 @@ Parameter("k_Ca_cyt_to_extra", 4)  # 1/s
 # Assume that at equilibrium before any agonist is added the rate out of the
 # cytosol equals the rate in. We'll enforce this by setting the extra to cyt
 # rate constant with an Expression.
+# k_Ca_cyt_to_extra*Ca_C_0/(Ca_extra_0 * Vextra**2)
 Expression("k_Ca_extra_to_cyt", k_Ca_cyt_to_extra * Ca_C_0 / Ca_extra_0)
-
+# Parameter('k_Ca_extra_to_cyt', 0)
 # Depeletion/metabolism of IP3
 # 1.25 1/s as in Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
 Parameter("kdeg_ip3", 1.25)
@@ -830,7 +833,7 @@ Expression("Ca_num_to_microM", 1 / (Vcell * microM_to_num_per_pL))
 # FRET ratio change for baseline concentration relative to zero - dR/R = (Rb-Rmin)/Rmin
 Expression(
     "Frc_base",
-    Rmax
+    -Rmax
     * (Ca_C_0 * Ca_num_to_microM) ** HillCoeff_TNXXL
     / (Kd_cytCa_bind_TNXXL + (Ca_C_0 * Ca_num_to_microM) ** HillCoeff_TNXXL),
 )
@@ -838,9 +841,10 @@ Expression(
 Expression(
     "Frc_curr",
     Rmax
-    * ((cytoCa) * Ca_num_to_microM) ** HillCoeff_TNXXL
-    / (Kd_cytCa_bind_TNXXL + ((cytoCa) * Ca_num_to_microM) ** HillCoeff_TNXXL),
+    * (cytoCa * Ca_num_to_microM) ** HillCoeff_TNXXL
+    / (Kd_cytCa_bind_TNXXL + (cytoCa * Ca_num_to_microM) ** HillCoeff_TNXXL),
 )
+Expression("Fr_diff", Frc_curr + Frc_base)
 # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
-Expression("FRET", (Frc_curr - Frc_base) / (Frc_base + 1))
+Expression("FRET", (Frc_curr + Frc_base) / (-Frc_base + 1))
 # print(Frc_base.get_value())
