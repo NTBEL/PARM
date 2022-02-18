@@ -387,7 +387,7 @@ Parameter('k_PAR2_denatured_degradation', 4e-3)
 # is 2x10^6 1/(M*s). Converting for our model that would be:
 #    2x10^6 1/(M*s) / (10^-12 L) / N_A = 3x10^-6 1/(number*s) = 3*KF_BIND
 # We'll use that value as our initial estimate.
-Parameter('kf_PAR2_bind_TAT', KF_BIND*3)
+Parameter('kf_PAR2_bind_TAT', KF_BIND*3*Vextra.value)
 # PAR2 agonists in HEK 293T cells - LeSarge et al. https://doi.org/10.1021/acsmedchemlett.9b00094
 #   2f-LIGRLO(Sulfo-Cy5)-NH2 has Kd = 430 nM with EC50 = 296 nM
 #   Isox-Cha-Chg-ARK(Sulfo-Cy5)-NH2 has Kd = 38 nM with EC50 = 16 nM
