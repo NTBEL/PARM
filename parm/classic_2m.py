@@ -94,14 +94,15 @@ Unless otherwise noted the units used are:
     Volume : pL
     Area: micrometer^2
     Distance: micrometer
-    Volume Concentration: number ( convert concentration by factor of V*N_A)
-    Area Concentration: number/micrometer^2
-    Forward bimolecular association rate constants (kf) : 1/(s*number)
+    Volume Concentration: molecule/cell ( convert concentration by factor of V*N_A)
+    Area Concentration: molecule/micrometer^2
+    Forward bimolecular association rate constants (kf) : 1/(s*molecule/cell)
     Reverse of bimolecular association (dissociation) rate constants (kr) : 1/s
     Catalytic rate constants (kcat) :  1/s
     Other unimolecular rate constants: 1/s
-    Dissociation (bimolecular) constants: Kd : number
-    Binding (bimolecular) constants : Kb : 1/number
+    Zero order rate constants: molecule/(cell*s)
+    Dissociation (bimolecular) constants: Kd : molecule/cell
+    Binding (bimolecular) constants : Kb : 1/(molecule/cell)
 """
 
 # PySB components
@@ -137,9 +138,9 @@ from scipy.constants import N_A
 from sympy.functions.elementary.miscellaneous import Max
 
 # Conversion factors for concentration units.
-# microMolar to number/pL
+# microMolar to molecule/pL
 microM_to_num_per_pL = 1e-6 * N_A * 1e-12
-# nanoMolar to number/pL
+# nanoMolar to molecule/pL
 nM_to_num_per_pL = 1e-9 * N_A * 1e-12
 # Cubic micron to picoliter:
 #               cubic-micron to mL * mL to L * L to pL
@@ -190,7 +191,7 @@ Parameter("Verm", ERMthickness.value * SAer.value * cubicmicron_to_pL)
 
 # Default forward, reverse, and catalytic rates:
 # KF_BIND is equivalent to kf/(Vcell*1e-12) / N_A for kf in 1/(M*s)
-KF_BIND = 1e-6  # 1/(number*s) Default forward binding rate (for cell volume of 1 pL) from Aldridge et al. https://doi.org/10.1038/ncb1497
+KF_BIND = 1e-6  # 1/(molecule/cell*s) Default forward binding rate (for cell volume of 1 pL) from Aldridge et al. https://doi.org/10.1038/ncb1497
 KR_BIND = 1e-3  # Default dissociation rate from Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
 KCAT = 10  # "average enzyme" from Bar-Even et al. https://doi.org/10.1021/bi2002289
 
@@ -208,8 +209,8 @@ SPC = 0.1 * microM_to_num_per_pL
 # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
 D_Ca = 5.3e-6  # cm^2/s
 R_o = 2e-7  # cm
-# (1e-3) term is for unit conversion from cm^3/s*number to 1/s*(number/L)
-# mL/s*number -> 10^-3 L/(s*number) and dividing by V converts to 1/(s*number)
+# (1e-3) term is for unit conversion from cm^3/(s*molecule) to 1/s*molecule*L
+# mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
 K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcell.value * 1e-12)
 
 # Ion channel transport rate: up to 1e8 ions/s https://www.ncbi.nlm.nih.gov/books/NBK26910/
@@ -233,20 +234,20 @@ K_CONVERT = 1  # 1/s
 #  of  the  reactant  compartment  with  the  highest  dimension"
 # -- https://www.informs-sim.org/wsc09papers/087.pdf
 # Although the above says "volume/time" for units of the forward binding rate,
-# as far as I can tell it is actually volume/time*number so that dividing by
-# the compartment volume would give you 1/time*number (e.g., 1/s*number),
-# corresponding to concentrations given in number per cell.
+# as far as I can tell it is actually volume/time*molecule/cell so that dividing by
+# the compartment volume would give you 1/time*molecule/cell (e.g., 1/s*molecule/cell),
+# corresponding to concentrations given in molecule per cell.
 # Also see BNGL example: https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
 
-# Since we are already converting concentrations to numbers per cell and
+# Since we are already converting concentrations to molecules per cell and
 # the bimolecular binding rates are already relative to the cell volume
 # of 1 pL we can scale all compartment sizes relative to the cell/cytosol
 # volume.
 # When comparment volume scaling is applied it should yield:
 #       KF_BIND/(Vcompartment/Vcell) = KF_BIND*Vcell/Vcomparment
-# so that KF_BIND*Vcell is the binding rate in pL/s*number and then
+# so that KF_BIND*Vcell is the binding rate in pL/s*molecule and then
 # division by Vcompartment returns the compartment-specific scaled binding
-# rate in 1/s*number.
+# rate in 1/s*molecule/cell.
 Parameter("V_EXTRA", Vextra.value / Vcell.value)
 Compartment("EXTRACELLULAR", dimension=3, size=V_EXTRA)
 # Cell Membrane
@@ -390,21 +391,15 @@ Initial(Ca(loc="E", b=None) ** EXTRACELLULAR, Ca_extra_0)
 
 # Kinetic Parameters
 # ==================
-# PAR2 synthesis
-# rate of receptor synthesis from
-# Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
-# used in yeast G-protein cycle model is: 4 number/s
-Parameter("k_PAR2_synthesis", 4 / Vcm.value)
-# Rate constant for degradation of PAR_I - Use an expression to enforce the
-# assumption that at equilibrium the net rate of PAR2_I change due to synthesis
-# and degradation is zero in the abscence of agonist or any PAR2 denaturation by
-# MH.
-# Parameter('k_PAR2_I_degradation', 0)
-Expression("k_PAR2_I_degradation", k_PAR2_synthesis / PAR2_0)
+
+# PAR2 degradation
+
+# Occupied PAR2:
 # rate constant for ligand-bound receptor degradation from
 # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
 # used in yeast G-protein cycle model is: 4x10^-3 1/s
 Parameter("k_PAR2_bound_degradation", 4e-3)
+# Denatured PAR2:
 # As a default we can set the denatured PAR2 degradation to have the same
 # rate constant as bound PAR2 degradation, but we'll assume it could be
 # different.
@@ -415,7 +410,7 @@ Parameter("k_PAR2_denatured_degradation", 4e-3)
 # Binding forward rate constant for ligand-receptor binding in the yeast
 # G-protein cycle model of  Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
 # is 2x10^6 1/(M*s). Converting for our model that would be:
-#    2x10^6 1/(M*s) / (10^-12 L) / N_A = 3x10^-6 1/(number*s) = 3*KF_BIND
+#    2x10^6 1/(M*s) / (10^-12 L) / N_A = 3x10^-6 1/(molecule*s) = 3*KF_BIND
 # We'll use that value as our initial estimate.
 Parameter("kf_PAR2_bind_TAT", KF_BIND * 3 * Vextra.value)
 # PAR2 agonists in HEK 293T cells - LeSarge et al. https://doi.org/10.1021/acsmedchemlett.9b00094
@@ -476,12 +471,6 @@ Parameter("kr_erCa_bind_IP3R", KR_BIND)
 # Effective IP3R channel permeability as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
 # is 525 1/s
 Parameter("kcat_tranport_erCa", 525)
-#  cytosol -> ER:
-# Parameter('kf_cytCa_bind_IP3R', K_CA_BIND)
-# Parameter('kr_cytCa_bind_IP3R', KR_BIND)
-# Parameter('kf_cytCa_bind_IP3R', KF_BIND/10)
-# Parameter('kr_cytCa_bind_IP3R', KR_BIND*10)
-# Parameter('kcat_tranport_cytCa', K_ION_CHANNEL)
 
 # Cytosolic Ca2+ regulation
 # cytosol to extracellular space
@@ -509,13 +498,12 @@ tat_PAR2_a = (
     TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
 )
 
-# PAR2 synthesis
-synthesize(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_synthesis)
-
 # PAR2 degradation
-degrade(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_I_degradation)
+# Occupied but inactive:
 degrade(tat_PAR2_i, k_PAR2_bound_degradation)
+# Occupied and active:
 degrade(tat_PAR2_a, k_PAR2_bound_degradation)
+# Denatured:
 degrade(
     PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_denatured_degradation
 )
@@ -790,8 +778,9 @@ Observable("dPAR2", PAR2(state="D"))
 Expression("Ro", iPAR2 + aPAR2)
 # RL
 Observable("LR", tat_PAR2_i)
-Expression("occupancy_ratio", LR / Ro)
+Expression("inactive_bound_ratio", LR / Ro)
 Expression("active_ratio", aPAR2 / Ro)
+Expression("occupancy", (LR + aPAR2) / Ro)
 Observable(
     "aGaq_i", Gaq(bpar=None, bgdp=3, bgbg=None) ** CELL_MEMB % GTP(b=3) ** CELL_MEMB
 )
