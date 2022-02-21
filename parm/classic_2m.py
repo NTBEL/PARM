@@ -31,23 +31,16 @@ FRET ratio for cytosolic Ca2+ is estimated by using the Hill equation with
 parameters from the dose-repsonse curve of TN-XXL to Ca2+.
 The full set of interactions and sequence of rules included in the model are as
 follows:
-  1. Zero-order synthesis of PAR2:
-      None ---> PAR2_I
-  2. First order degradations of PAR2:
-      i) free inactive PAR2:
-         PAR2_I ---> None
-     ii) bound inactive PAR2:
+  1. First order degradation of occupied and denatured PAR2:
+      i) bound inactive PAR2:
          TAT:PAR2_I ---> None
-    iii) active PAR2:
+     ii) active PAR2:
          TAT:PAR2_A ---> None
-     iv) denatured PAR2:
+    iii) denatured PAR2:
          PAR2_D ---> None
-  Note: In the abscence of agonist and with no denatured PAR2 we expect 1 and
-        2.i to cancel each other so that the net rate of change of PAR2_I is
-        zero.
-  3. Two-state receptor activation of PAR2 by 2AT:
+  2. Two-state receptor activation of PAR2 by 2AT:
       2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
-  4. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
+  3. Gaq activation by activated-PAR2:  | Note: G-proteins are not pre-coupled to PAR2.
       i) G protein heterotrimer binds activated PAR2:
          PAR2_A + Gaq:GDP:Gbg <---> PAR2_A:Gaq:GDP:Gbg
      ii) GDP preferentially unbinds from Gaq:
@@ -58,37 +51,37 @@ follows:
          PAR2_A:Gaq:GTP:Gbc ---> PAR2_A:Gaq:GTP + Gbc
       v) Gaq:GTP dissociates from PAR2, Gaq is now active (G protein dissociation from the receptor):
          PAR2_A:Gaq:GTP ---> PAR2_A + Gaq:GTP
-  5. Hydrolosis of GTP by Gaq (inactivation of Gaq)
+  4. Hydrolosis of GTP by Gaq (inactivation of Gaq)
        a) Slow hydrolosis by Gaq alone
            Gaq:GTP ---> Gaq:GDP
        b) RGS enhanced hydrolosis
            Gaq:GTP + RGS <---> Gaq:GTP:RGS ---> Gaq:GDP + RGS
        c) PLC enhanced hydrolosis
            Gaq:GTP:PLC ---> Gaq:GDP + PLC
-  6. Recombination of G protein heterotrimer
+  5. Recombination of G protein heterotrimer
      Gaq:GDP + Gbg ---> Gaq:GDP:Gbq
-  7. PLC activation by binding Gaq:
+  6. PLC activation by binding Gaq:
       Gaq_A:GTP + PLC <---> Gaq_A:GTP:PLC
-  8. Conversion of PIP2 to IP3
+  7. Conversion of PIP2 to IP3
       Gaq_A:GTP:PLC + PIP2 <---> Gaq_A:GTP:PLC:PIP2 ---> Gaq_A:PLC + IP3
-  9. Binding of IP3 to IP3R:  | IP3R is only activated when all 4 subunits are bound.
+  8. Binding of IP3 to IP3R:  | IP3R is only activated when all 4 subunits are bound.
      i) IP3R + IP3 <---> IP3R:IP3, subunit 1
     ii) IP3R + IP3 <---> IP3R:IP3, subunit 2
    iii) IP3R + IP3 <---> IP3R:IP3, subunit 3
     iv) IP3R + IP3 <---> IP3R:IP3, subunit 4
- 10. Transport of Ca2+ by activated IP3R
+ 9. Transport of Ca2+ by activated IP3R
     i) ER to cytosol:
        IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
    ii) Reverse, cytosol to ER:  | Assuming the transport is not just one way.
        IP3R:IP3_4 + Ca_C <---> Ca_C:IP3R:IP3_4 ---> Ca_E + IP3R:IP3_4
- 11. Cytosolic calcium regualation
+ 10. Cytosolic calcium regualation
     i) First-order excretion of calcium to the extracellular space:
        Ca_C ---> Ca_EXTRA
    ii) First-order influx of extracellular calcium into the cytosol:
        Ca_EXTRA --> Ca_C
  Note: In the abscence of agonist we expect 11.i and 11.ii to cancel each other
        out so that the net rate of change of the cytosolic calcium is zero.
- 12. Degradation of IP3
+ 11. Degradation of IP3
        IP3 ---> None
 Unless otherwise noted the units used are:
     Volume : pL
