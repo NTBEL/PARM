@@ -108,7 +108,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Gaq activation by activated-PAR2:
     #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I <---> PAR2_A + Gaq_A
     tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     # Alias the free Gprotein heterotrimer
     Gaq_gdp_Gbg = (
@@ -119,7 +119,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
     tat_PAR2_a_Gaq_gdp_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -134,7 +134,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Alias the complex  2AT:PAR2_A:Gaq:Gbg
     tat_PAR2_a_Gaq_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=None, bgbg=4) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
     )
@@ -148,7 +148,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Alias the complex 2AT:PAR2_A:Gaq:GTP:Gbg
     tat_PAR2_a_Gaq_gtp_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GTP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -163,7 +163,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Alias the complex 2AT:PAR2_A:Gaq:GTP
     tat_PAR2_a_Gaq_gtp = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=None) ** CELL_MEMB
         % GTP(b=3) ** CELL_MEMB
     )
@@ -199,7 +199,7 @@ def heterotrimer_precouples_free_inactive_par2():
     )
     alias_model_components()
     # Alias the inactive PAR2
-    PAR2_i = PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB
+    PAR2_i = PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
     # Alias the free Gprotein heterotrimer
     Gaq_gdp_Gbg = (
         Gaq(bpar=None, bgbg=3, bgdp=4) ** CELL_MEMB
@@ -208,7 +208,7 @@ def heterotrimer_precouples_free_inactive_par2():
     )
     # Alias the complex 2AT:PAR2_I:Gaq:GDP:Gbg
     PAR2_i_Gaq_gdp_Gbg = (
-        PAR2(state="I", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="I", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -235,7 +235,7 @@ def heterotrimer_binds_free_active_par2():
     )
     alias_model_components()
     # Alias the inactive PAR2
-    PAR2_a = PAR2(state="A", bortho=None, bgaq=None) ** CELL_MEMB
+    PAR2_a = PAR2(state="A", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
     # Alias the free Gprotein heterotrimer
     Gaq_gdp_Gbg = (
         Gaq(bpar=None, bgbg=3, bgdp=4) ** CELL_MEMB
@@ -244,7 +244,7 @@ def heterotrimer_binds_free_active_par2():
     )
     # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
     PAR2_a_Gaq_gdp_Gbg = (
-        PAR2(state="A", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="A", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -281,7 +281,7 @@ def gprotein_activation_by_free_active_par2():
     #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I <---> PAR2_A + Gaq_A
     # Alias the complex PAR2_A:Gaq:GDP:Gbg
     PAR2_a_Gaq_gdp_Gbg = (
-        PAR2(state="A", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="A", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -289,7 +289,7 @@ def gprotein_activation_by_free_active_par2():
 
     # Alias the complex  PAR2_A:Gaq:Gbg
     PAR2_a_Gaq_Gbg = (
-        PAR2(state="A", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="A", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=None, bgbg=4) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
     )
@@ -302,7 +302,7 @@ def gprotein_activation_by_free_active_par2():
     )
     # Alias the complex PAR2_A:Gaq:GTP:Gbg
     PAR2_a_Gaq_gtp_Gbg = (
-        PAR2(state="A", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="A", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GTP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -316,7 +316,7 @@ def gprotein_activation_by_free_active_par2():
     )
     # Alias the complex PAR2_A:Gaq:GTP
     PAR2_a_Gaq_gtp = (
-        PAR2(state="A", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="A", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=None) ** CELL_MEMB
         % GTP(b=3) ** CELL_MEMB
     )
@@ -330,7 +330,7 @@ def gprotein_activation_by_free_active_par2():
     # Alias the complex Gaq:GTP
     Gaq_gtp = Gaq(bpar=None, bgdp=3, bgbg=None) ** CELL_MEMB % GTP(b=3) ** CELL_MEMB
     # Alias the free active PAR2
-    PAR2_a = PAR2(state="A", bortho=None, bgaq=None) ** CELL_MEMB
+    PAR2_a = PAR2(state="A", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
     # Gaq unbinds from PAR2
     Rule(
         "release_gaq_free_par2_a",
@@ -426,7 +426,6 @@ def precoupled_activation_mechanism():
     gprotein_activation_by_2at_bound_active_par2()
     return
 
-
 def precoupled_activation_mechanism_with_constitutive_activity():
     gprotein_monomers()
     gprotein_initials()
@@ -434,7 +433,6 @@ def precoupled_activation_mechanism_with_constitutive_activity():
     gprotein_activation_by_2at_bound_active_par2()
     gprotein_activation_by_free_active_par2()
     return
-
 
 def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     # 3. PLC binding enhanced conversion of GTP to GDP

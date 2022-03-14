@@ -352,12 +352,7 @@ def gaq_activated_calcium_signaling():
 
 
 def observables():
-    # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
-    # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
-    #  Kd = 800 nM,and the Hill-Coefficient is 1.5, https://doi.org/10.1038/nmeth.1243
-    Parameter("Kd_cytCa_bind_TNXXL", 800e-3)  # microM
-    Parameter("Rmax", 2.3)
-    Parameter("HillCoeff_TNXXL", 1.5)
+
     alias_model_components()
     Observable("totPIP2", PIP2())
     Observable("totIP3", IP3())
@@ -382,6 +377,18 @@ def observables():
     Expression("Ca_num_to_nM", 1 / (Vcyto * units.nM_to_molec_per_pL))
     alias_model_components()
     Expression("cytoCa_nM", cytoCa * Ca_num_to_nM)
+
+    return
+
+
+def fret_calcium_indicator_tnxxl():
+    # The maximum FRET ratio, deltaR/R, for TN-XXL is 2.3 at 39 microM Ca2+,
+    # the effective Kd for Ca2+ binding to TN-XXL FRET reporter is
+    #  Kd = 800 nM,and the Hill-Coefficient is 1.5, https://doi.org/10.1038/nmeth.1243
+    Parameter("Kd_cytCa_bind_TNXXL", 800e-3)  # microM
+    Parameter("Rmax", 2.3)
+    Parameter("HillCoeff_TNXXL", 1.5)
+    alias_model_components()
     # Get the FRET signal
 
     # Compute the FRET ratio change relative to zero (i.e., Rmin) using the Hill equation,
@@ -409,5 +416,3 @@ def observables():
     alias_model_components()
     # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
     Expression("FRET", (Frc_curr + Frc_base) / (-Frc_base + 1))
-
-    return
