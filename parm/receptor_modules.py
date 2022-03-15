@@ -36,14 +36,16 @@ from . import defaults, units
 
 
 def receptor_agonist_monomers():
+    """Declares the monomers for 2AT (TAT) and PAR2."""
     # PAR2 agonist 2AT as in Kang et al. https://doi.org/10.1021/acsnano.9b01993
     Monomer("TAT", ["b"])
     # PAR2:
     #  binding site:
     #    bortho = orthosteric 2AT binding site
+    #    ballo = allosteric binding site
     #    bgaq = G protein binding site
     #  states: I = inactive, A = active, D = denatured
-    Monomer("PAR2", ["bortho", "bgaq", "state"], {"state": ["I", "A", "D"]})
+    Monomer("PAR2", ["bortho", "ballo", "bgaq", "state"], {"state": ["I", "A", "D"]})
     alias_model_components()
     # Annotations
     # ===========
@@ -52,6 +54,7 @@ def receptor_agonist_monomers():
 
 
 def agonist_initial():
+    """Declares the initial condition for 2AT (TAT)."""
     alias_model_components()
     # PAR2 agonist 2AT,
     # 330 nM for Fig 2D data from Kang et al. https://doi.org/10.1021/acsnano.9b01993
@@ -66,6 +69,7 @@ def agonist_initial():
 
 
 def total_receptor_initials():
+    """Declares parameters defining the total and denatured amounts of PAR2."""
     # total PAR2
     # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
     # # tsA201 cells
@@ -83,6 +87,12 @@ def total_receptor_initials():
 
 
 def minimal_two_state_par2_activation():
+    """Defines a minimal two-state activation mechansim of PAR2 by 2AT.
+    The miminal two-state activation mechanism is given by:
+        2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
+
+    Declares initial conditions for PAR2 in state I and state D.
+    """
 
     receptor_agonist_monomers()
     agonist_initial()
@@ -91,8 +101,8 @@ def minimal_two_state_par2_activation():
     alias_model_components()
     Expression("PAR2_0_I", Max(PAR2_0 - f_denature * PAR2_0, 0))
     alias_model_components()
-    Initial(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
-    Initial(PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
+    Initial(PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
+    Initial(PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
     # Binding forward rate constant for ligand-receptor binding in the yeast
     # G-protein cycle model of  Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
     # is 2x10^6 1/(M*s). Converting for our model that would be:
@@ -119,17 +129,19 @@ def minimal_two_state_par2_activation():
     alias_model_components()
     # Alias the TAT:PAR2 complexes
     tat_PAR2_i = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="I", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="I", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     # 2-step activation of PAR2 by 2AT agonist:
     # i.   2AT + PAR2_I <---> TAT:PAR2_I
     Rule(
         "tat_bind_PAR2",
         TAT(b=None) ** EXTRACELLULAR
-        + PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB
+        + PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
         | tat_PAR2_i,
         kf_PAR2_bind_TAT,
         kr_PAR2_bind_TAT,
@@ -142,14 +154,20 @@ def minimal_two_state_par2_activation():
 
 
 def single_state_par2_activation():
+    """Defines a single-state activation mechansim of PAR2 by 2AT.
+    The single-state activation mechanism is given by:
+        2AT + PAR2_I <---> TAT:PAR2_A
+
+    Declares initial conditions for PAR2 in state I and state D.
+    """
     receptor_agonist_monomers()
     agonist_initial()
     total_receptor_initials()
     alias_model_components()
     Expression("PAR2_0_I", Max(PAR2_0 - f_denature * PAR2_0, 0))
     alias_model_components()
-    Initial(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
-    Initial(PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
+    Initial(PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
+    Initial(PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
     # Binding forward rate constant for ligand-receptor binding in the yeast
     # G-protein cycle model of  Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
     # is 2x10^6 1/(M*s). Converting for our model that would be:
@@ -172,17 +190,19 @@ def single_state_par2_activation():
     alias_model_components()
     # Alias the TAT:PAR2 complexes
     tat_PAR2_i = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="I", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="I", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     # Single state receptor activation (induced fit) by 2AT.
     #    2AT + PAR2_I <---> TAT:PAR2_A
     Rule(
         "tat_bind_PAR2",
         TAT(b=None) ** EXTRACELLULAR
-        + PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB
+        + PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
         | tat_PAR2_a,
         kf_PAR2_bind_TAT,
         kr_PAR2_bind_TAT,
@@ -191,7 +211,17 @@ def single_state_par2_activation():
 
 
 def constitutive_par2_activity():
+    """Defines constitutive activity for PAR2.
+    Adds isomerization of PAR2 between its inactive and active forms so that
+    PAR2 can become active without agonist:
+        PAR2_I <---> PAR2_A
 
+    Also includes enhanced binding of 2AT to the active form of PAR2:
+        2AT + PAR2_A <---> TAT:PAR2_A
+
+    Declares a binding_amplification_factor parametr that controls how much
+    stronger the 2AT binding is to the active form of PAR2.
+    """
     Parameter("kf_PAR2_constitutively_active", 1e-3)  # 1/s
     Parameter("kr_PAR2_constitutively_active", 1e-1)  # 1/s
     alias_model_components()
@@ -199,8 +229,8 @@ def constitutive_par2_activity():
     # R <---> R*
     # PAR2_I <---> PAR2_A
     equilibrate(
-        PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB,
-        PAR2(state="A", bortho=None, bgaq=None) ** CELL_MEMB,
+        PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
+        PAR2(state="A", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
         [kf_PAR2_constitutively_active, kr_PAR2_constitutively_active],
     )
     #    2AT + PAR2_A <---> TAT:PAR2_A
@@ -217,12 +247,13 @@ def constitutive_par2_activity():
     Expression("kr_PAR2_A_bind_TAT", Kd_PAR2_A_bind_TAT * kf_PAR2_bind_TAT / V_EXTRA)
     alias_model_components()
     tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     Rule(
         "tat_bind_PAR2_A",
         TAT(b=None) ** EXTRACELLULAR
-        + PAR2(state="A", bortho=None, bgaq=None) ** CELL_MEMB
+        + PAR2(state="A", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB
         | tat_PAR2_a,
         kf_PAR2_bind_TAT,
         kr_PAR2_A_bind_TAT,
@@ -245,19 +276,14 @@ def occupied_par2_degradation():
     # used in yeast G-protein cycle model is: 4x10^-3 1/s
     Parameter("k_PAR2_bound_degradation", 4e-3)
     alias_model_components()
-    # Alias the TAT:PAR2 complexes
-    tat_PAR2_i = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="I", bortho=1, bgaq=None) ** CELL_MEMB
-    )
-    tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, bgaq=None) ** CELL_MEMB
-    )
+    # Alias the TAT:PAR2 complex
 
+    tat_PAR2 = (
+        TAT(b=1) ** EXTRACELLULAR % PAR2(bortho=1, ballo=WILD, bgaq=None) ** CELL_MEMB
+    )
     # PAR2 degradation
-    # Occupied but inactive:
-    degrade(tat_PAR2_i, k_PAR2_bound_degradation)
-    # Occupied and active:
-    degrade(tat_PAR2_a, k_PAR2_bound_degradation)
+    # Occupied any state:
+    degrade(tat_PAR2, k_PAR2_bound_degradation)
     return
 
 
@@ -270,7 +296,7 @@ def denatured_par2_degradation():
     alias_model_components()
     # Denatured:
     degrade(
-        PAR2(state="D", bortho=None, bgaq=None) ** CELL_MEMB,
+        PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
         k_PAR2_denatured_degradation,
     )
     return
@@ -284,7 +310,8 @@ def unoccupied_active_par2_degradation():
     Parameter("k_PAR2_free_degradation", 4e-3)
     alias_model_components()
     degrade(
-        PAR2(state="A", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_free_degradation
+        PAR2(state="A", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
+        k_PAR2_free_degradation,
     )
     return
 
@@ -296,15 +323,18 @@ def par2_synthesis():
     # used in yeast G-protein cycle model is: 4 molecules/s
     Parameter("k_PAR2_synthesis", 4)
     alias_model_components()
-    synthesize(PAR2(state="I", bortho=None, bgaq=None) ** CELL_MEMB, k_PAR2_synthesis)
+    synthesize(
+        PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
+        k_PAR2_synthesis,
+    )
     return
 
 
-def addon_minimial_twostate_precoupled_par2_activation():
+def addon_minimal_twostate_precoupled_par2_activation():
     alias_model_components()
     # Alias the pre-coupled PAR2-Gprotein complex
     PAR2_i_Gaq_gdp_Gbg = (
-        PAR2(state="I", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="I", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -312,7 +342,7 @@ def addon_minimial_twostate_precoupled_par2_activation():
     # Alias the complex 2AT:PAR2_I:Gaq:GDP:Gbg
     tat_PAR2_i_Gaq_gdp_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="I", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="I", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -320,7 +350,7 @@ def addon_minimial_twostate_precoupled_par2_activation():
     # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
     tat_PAR2_a_Gaq_gdp_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -346,7 +376,7 @@ def addon_single_state_precoupled_par2_activation():
     alias_model_components()
     # Alias the pre-coupled PAR2-Gprotein complex
     PAR2_i_Gaq_gdp_Gbg = (
-        PAR2(state="I", bortho=None, bgaq=2) ** CELL_MEMB
+        PAR2(state="I", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -354,7 +384,7 @@ def addon_single_state_precoupled_par2_activation():
     # Alias the complex 2AT:PAR2_A:Gaq:GDP:Gbg
     tat_PAR2_a_Gaq_gdp_Gbg = (
         TAT(b=1) ** EXTRACELLULAR
-        % PAR2(state="A", bortho=1, bgaq=2) ** CELL_MEMB
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=2) ** CELL_MEMB
         % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
         % GDP(b=3) ** CELL_MEMB
         % Gbg(b=4) ** CELL_MEMB
@@ -381,7 +411,9 @@ def observables():
     alias_model_components()
     # Ro
     Expression("totPAR2", iPAR2 + aPAR2)
-    tat_PAR2 = TAT(b=1) ** EXTRACELLULAR % PAR2(bortho=1, bgaq=WILD) ** CELL_MEMB
+    tat_PAR2 = (
+        TAT(b=1) ** EXTRACELLULAR % PAR2(bortho=1, ballo=WILD, bgaq=WILD) ** CELL_MEMB
+    )
     Observable("occupied_PAR2", tat_PAR2)
     alias_model_components()
     Expression("par2_active_ratio", aPAR2 / totPAR2)
