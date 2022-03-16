@@ -1,3 +1,21 @@
+"""Defines functions for G-protein activation, regulation, and G-protein observables.
+
+It includes four alternate mechanisms for G-protein activation:
+    * classic_activation_mechanism
+    * classic_activation_mechanism_with_constitutive_activity
+    * precoupled_activation_mechanism
+    * precoupled_activation_mechanism_with_constitutive_activity
+
+As well as functions to add G-protein regulation:
+    * gaq_hydrolyzes_gtp_to_gdp
+    * rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp
+
+And an addon function for additional regulation of G-protein by PLC:
+    * addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp
+
+"""
+
+
 # PySB components
 from pysb import (
     Monomer,
@@ -35,6 +53,16 @@ from . import defaults, units
 
 
 def gprotein_monomers():
+    """Declares the G-protein monomers.
+    Adds 4 monomers and 3 annotations.
+
+    Monomers:
+        * Gaq - G-protein alpha subunit
+        * Gbg - The beta-gamma G-protein subunit
+        * GDP - guanosine diphosphate
+        * GTP - guanosine triphosphate
+
+    """
     # G-alpha_q G-protein unit, states: I = inactive, A = active
     Monomer("Gaq", ["bpar", "bgbg", "bgdp"])
     # G-beta-gamma G-protein units
@@ -52,6 +80,19 @@ def gprotein_monomers():
 
 
 def gprotein_initials():
+    """Declares initial conditions for G-protein monomers.
+
+    G-proteins are initialized as the heterotrimer consisting of the alpha
+    subunit Gaq and beta-gamma subunit Gbg with GDP bound to Gaq.
+
+    Adds 3 parameters.
+
+    Parameters:
+        * Gprotein_0 - initial concentration of G-protein heterotrimer in
+            the cell membrane. The Gaq subunit is initially bound to GDP.
+        * GTP_0 - initial concentration of free GTP in the cytosol.
+        * GDP_0 - initial concentration of free GDP in the cytosol.
+    """
     alias_model_components()
     # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
     #     - Endogenous G-protein density: 40/micrometer^2
@@ -86,6 +127,52 @@ def gprotein_initials():
 
 
 def gprotein_activation_by_2at_bound_active_par2():
+    """Defines activation of G-protein by 2AT-bound active PAR2.
+
+    This function encodes activation of Gaq by 2AT-occupied active PAR2 with
+    reactions from PAR2 and G-protein binding to release of the active GTP-bound
+    Gaq subunit. In all, there are 5 steps:
+        i) G protein heterotrimer binds activated PAR2:
+            TAT:PAR2_A + Gaq:GDP:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
+        ii) GDP unbinds from Gaq:
+            TAT:PAR2_A:Gaq:GDP:Gbc <---> TAT:PAR2_A:Gaq:Gbc + GDP
+        iii) GTP binds Gaq:
+            TAT:PAR2_A:Gaq:Gbc + GTP <---> TAT:PAR2_A:Gaq_A:GTP:Gbg
+        iv) Gbg dissociates from Gaq (i.e., heterotrimer dissociation):
+            TAT:PAR2_A:Gaq:GTP:Gbc <---> TAT:PAR2_A:Gaq:GTP + Gbc
+        v) Gaq:GTP dissociates from PAR2:
+            TAT:PAR2_A:Gaq:GTP <---> TAT:PAR2_A + Gaq:GTP
+
+    Adds 10 parameters but no expressions.
+
+    Parameters:
+        * kf_TAT_PAR2_A_bind_Gaq - forward rate constant for PAR2 binding
+            to Gaq in the heterotrimer.
+                TAT:PAR2_A + Gaq:GDP:Gbg ---> TAT:PAR2_A:Gaq:GDP:Gbg, kf
+        * kr_TAT_PAR2_A_bind_Gaq - reverse rate constant for PAR2 binding to
+            Gaq in the heterotrimer.
+                TAT:PAR2_A:Gaq:GDP:Gbg ---> TAT:PAR2_A + Gaq:GDP:Gbg, kr
+        * k_gdp_release - rate constant for unbinding of GDP from Gaq after
+            PAR2 binding.
+                TAT:PAR2_A:Gaq:GDP:Gbg ---> TAT:PAR2_A:Gaq:Gbg + GDP, k_release
+        * k_gdp_bind - rate constant for binding of GDP to Gaq after PAR2
+            binding.
+                TAT:PAR2_A:Gaq:Gbg + GDP ---> TAT:PAR2_A:Gaq:GDP:Gbg, k_bind
+        * k_gtp_bind - rate constant for GTP binding to Gaq after PAR2 binding
+            and the release of GDP.
+        * k_gtp_release - rate constant for GTP unbinding from Gaq post PAR2
+            binding and release of GDP.
+        * kf_heterotrimer_dissociation - forward rate constant for dissociation
+            of the G-protein heterotrimer. i.e., Gbg unbinds from PAR2 bound
+            Gaq-GTP.
+        * kr_heterotrimer_dissociation - reverse rate constant for dissociation
+            of the G-protein heterotrimer. i.e., Gbg re-binds to the PAR2 bound
+            Gaq-GTP.
+        * kf_gaq_dissociation - forward rate constant for dissociation of Gaq
+            from PAR2. i.e., GTP bound Gaq unbinds from PAR2.
+        * kr_gaq_dissociation - reverse rate constant for dissociation of Gaq
+            from PAR2. i.e., GTP bound Gaq re-binds to PAR2.
+    """
     alias_model_components()
 
     # Gaq binding activated-PAR2
@@ -93,7 +180,7 @@ def gprotein_activation_by_2at_bound_active_par2():
     Parameter("kr_TAT_PAR2_A_bind_Gaq", defaults.KR_BIND)
     # Gaq release GDP
     Parameter("k_gdp_release", defaults.KR_BIND * 100)
-    Parameter("k_gdp_bind", defaults.KF_BIND)
+    Parameter("k_gdp_bind", defaults.KF_BIND / Vcyto.value)
     # Gaq bind GTP
     Parameter("k_gtp_bind", defaults.KF_BIND / Vcyto.value)
     Parameter("k_gtp_release", defaults.KR_BIND / 10)
@@ -108,7 +195,8 @@ def gprotein_activation_by_2at_bound_active_par2():
     # Gaq activation by activated-PAR2:
     #    PAR2_A + Gaq_I <---> PAR2_A:Gaq_I <---> PAR2_A + Gaq_A
     tat_PAR2_a = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
     )
     # Alias the free Gprotein heterotrimer
     Gaq_gdp_Gbg = (
@@ -426,6 +514,7 @@ def precoupled_activation_mechanism():
     gprotein_activation_by_2at_bound_active_par2()
     return
 
+
 def precoupled_activation_mechanism_with_constitutive_activity():
     gprotein_monomers()
     gprotein_initials()
@@ -433,6 +522,7 @@ def precoupled_activation_mechanism_with_constitutive_activity():
     gprotein_activation_by_2at_bound_active_par2()
     gprotein_activation_by_free_active_par2()
     return
+
 
 def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     # 3. PLC binding enhanced conversion of GTP to GDP
