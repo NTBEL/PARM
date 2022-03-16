@@ -160,8 +160,10 @@ def gprotein_activation_by_2at_bound_active_par2():
                 TAT:PAR2_A:Gaq:Gbg + GDP ---> TAT:PAR2_A:Gaq:GDP:Gbg, k_bind
         * k_gtp_bind - rate constant for GTP binding to Gaq after PAR2 binding
             and the release of GDP.
+                TAT:PAR2_A:Gaq:Gbg + GTP ---> TAT:PAR2_A:Gaq:GTP:Gbg, k_bind
         * k_gtp_release - rate constant for GTP unbinding from Gaq post PAR2
             binding and release of GDP.
+                TAT:PAR2_A:Gaq:GTP:Gbg ---> TAT:PAR2_A:Gaq:Gbg + GTP, k_release
         * kf_heterotrimer_dissociation - forward rate constant for dissociation
             of the G-protein heterotrimer. i.e., Gbg unbinds from PAR2 bound
             Gaq-GTP.
@@ -276,6 +278,23 @@ def gprotein_activation_by_2at_bound_active_par2():
 
 
 def heterotrimer_precouples_free_inactive_par2():
+    """Defines precoupling of the G-protein heterotrimer to free inactive PAR2.
+
+    Allows precouling of G-protein to PAR2 by reversible binding:
+        PAR2_i + Gaq:GDP:Gbg <---> PAR2_i:Gaq:GDP:Gbg
+
+    Adds 2 parameters and 1 expression.
+
+    Parameters:
+        Kd_gprotein_precoupling_i - dissociation constant for PAR2 and G-protein
+            binding.
+        kf_gprotein_precoupling_i - forward rate constant for PAR2 and G-protein
+            binding.
+
+    Expressions:
+        kr_gprotein_precoupling_i - reverse rate constant for PAR2 and G-protein
+            binding.
+    """
     alias_model_components()
     Parameter("Kd_gprotein_precoupling_i", 100 * units.nM_to_molec_per_pL * Vcm.value)
     Parameter("kf_gprotein_precoupling_i", defaults.KF_BIND / Vcyto.value)
@@ -312,6 +331,23 @@ def heterotrimer_precouples_free_inactive_par2():
 
 
 def heterotrimer_binds_free_active_par2():
+    """Defines binding of the G-protein heterotrimer to free active PAR2.
+
+    Allows coupling of G-protein to active PAR2 by reversible binding:
+        PAR2_A + Gaq:GDP:Gbg <---> PAR2_A:Gaq:GDP:Gbg
+
+    Adds 2 parameters and 1 expression.
+
+    Parameters:
+        Kd_gprotein_binds_PAR2_A - dissociation constant for PAR2 and G-protein
+            binding.
+        kf_gprotein_binds_PAR2_A - forward rate constant for PAR2 and G-protein
+            binding.
+
+    Expressions:
+        kr_gprotein_binds_PAR2_A - reverse rate constant for PAR2 and G-protein
+            binding.
+    """
     alias_model_components()
     Parameter("Kd_gprotein_binds_PAR2_A", 50 * units.nM_to_molec_per_pL * Vcm.value)
     Parameter("kf_gprotein_binds_PAR2_A", defaults.KF_BIND / Vcyto.value)
@@ -348,6 +384,51 @@ def heterotrimer_binds_free_active_par2():
 
 
 def gprotein_activation_by_free_active_par2():
+    """Defines activation of G-protein by 2AT-bound active PAR2.
+
+    This function encodes activation of Gaq by 2AT-occupied active PAR2 with
+    reactions from PAR2 and G-protein binding to release of the active GTP-bound
+    Gaq subunit.
+
+    Calls:
+        * heterotrimer_binds_free_active_par2
+
+    Adds 4 additional steps:
+        i) GDP unbinds from Gaq:
+            PAR2_A:Gaq:GDP:Gbc <---> PAR2_A:Gaq:Gbc + GDP
+        ii) GTP binds Gaq:
+            PAR2_A:Gaq:Gbc + GTP <---> PAR2_A:Gaq_A:GTP:Gbg
+        iii) Gbg dissociates from Gaq (i.e., heterotrimer dissociation):
+            PAR2_A:Gaq:GTP:Gbc <---> PAR2_A:Gaq:GTP + Gbc
+        iv) Gaq:GTP dissociates from PAR2:
+            PAR2_A:Gaq:GTP <---> PAR2_A + Gaq:GTP
+
+    Adds 8 additional parameters but no expressions.
+
+    Parameters:
+        * k_gdp_release_free_PAR2_A - rate constant for unbinding of GDP from
+            Gaq after PAR2 binding.
+                PAR2_A:Gaq:GDP:Gbg ---> PAR2_A:Gaq:Gbg + GDP, k_release
+        * k_gdp_bind_free_PAR2_A - rate constant for binding of GDP to Gaq after
+            PAR2 binding.
+                PAR2_A:Gaq:Gbg + GDP ---> PAR2_A:Gaq:GDP:Gbg, k_bind
+        * k_gtp_bind_free_PAR2_A - rate constant for GTP binding to Gaq after
+            PAR2 binding and the release of GDP.
+                PAR2_A:Gaq:Gbg + GTP ---> PAR2_A:Gaq:GTP:Gbg, k_bind
+        * k_gtp_release_free_PAR2_A - rate constant for GTP unbinding from Gaq
+            post PAR2 binding and release of GDP.
+                PAR2_A:Gaq:GTP:Gbg ---> PAR2_A:Gaq:Gbg + GTP, k_release
+        * kf_heterotrimer_dissociation_free_PAR2_A - forward rate constant for
+            dissociation of the G-protein heterotrimer. i.e., Gbg unbinds from
+            PAR2 bound Gaq-GTP.
+        * kr_heterotrimer_dissociation_free_PAR2_A - reverse rate constant for
+            dissociation of the G-protein heterotrimer. i.e., Gbg re-binds to
+            the PAR2 bound Gaq-GTP.
+        * kf_gaq_dissociation_free_PAR2_A - forward rate constant for
+            dissociation of Gaq from PAR2. i.e., GTP bound Gaq unbinds from PAR2.
+        * kr_gaq_dissociation_free_PAR2_A - reverse rate constant for
+            dissociation of Gaq from PAR2. i.e., GTP bound Gaq re-binds to PAR2.
+    """
     heterotrimer_binds_free_active_par2()
     alias_model_components()
     # Gaq release GDP
@@ -430,6 +511,16 @@ def gprotein_activation_by_free_active_par2():
 
 
 def gaq_hydrolyzes_gtp_to_gdp():
+    """Defines hydrolosis of GTP to GDP when bound to free Gaq.
+
+    Encodes the 1st order hydrolosis of GTP to GDP by Gaq:
+        Gaq:GTP ---> Gaq:GDP
+
+    Adds 1 parameter.
+
+    Parameters:
+            * k_gtp_to_gdp_auto - 1st order rate constant for the conversion.
+    """
     # Hydrolosis of GTP bound to Gaq
     # 1. Autocatalysis rate for Gaq is ~0.8 1/min = 0.0133 1/s
     # Bernstein et al. https://doi.org/10.1016/0092-8674(92)90165-9
@@ -446,6 +537,26 @@ def gaq_hydrolyzes_gtp_to_gdp():
 
 
 def rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp():
+    """Defines a regulator of g-protein signaling that promotes hydrolosis of GTP.
+
+    Adds a an enahanced catlalytic conversion of GTP to GDP by Gaq when RGS
+    protein is bound to Gaq:
+        i. Gaq:GTP + RGS <---> Gaq:GTP:RGS
+        ii. Gaq:GTP:RGS ---> Gaq:GDP + RGS
+
+    Adds 1 monomer, 4 parameters, 1 annotation.
+    Also defines the initial condition for the RGS protein.
+
+    Monomers:
+        * RGS - regulator of G-protein signaling (e.g., RGS4)
+
+    Parameters:
+        * RGS_0 - initial concentration of RGS protein in the cytosol.
+        * kf_rgs_bind_gaq - forward rate constant for binding of RGS to Gaq.
+        * kr_rgs_bind_gaq - reverse rate constant for binding of RGS to Gaq.
+        * k_gtp_to_gdp_rgs - 1st order catalytic rate for the conversion of
+            GTP to GDP by RGS-bound Gaq.
+    """
     # Regulator of G protein Signaling (RGS)
     Monomer("RGS", ["b"])
     alias_model_components()
@@ -495,6 +606,16 @@ def rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp():
 
 
 def classic_activation_mechanism():
+    """Defines the classic mechanism of G-protein activation.
+
+    In the classic activation mechanism G-proteins only interact with and get
+    actived by active PAR2 without any precoupling to the inactive receptor.
+
+    Calls:
+        * gprotein_monomers
+        * gprotein_initials
+        * gprotein_activation_by_2at_bound_active_par2
+    """
     gprotein_monomers()
     gprotein_initials()
     gprotein_activation_by_2at_bound_active_par2()
@@ -502,12 +623,34 @@ def classic_activation_mechanism():
 
 
 def classic_activation_mechanism_with_constitutive_activity():
+    """Defines the classic mechanism of G-protein activation but adds constitutive PAR2 activity.
+
+    In the classic activation mechanism G-proteins only interact with and get
+    actived by active PAR2 without any precoupling to the inactive receptor.
+
+    Calls:
+        * classic_activation_mechanism
+        * gprotein_activation_by_free_active_par2
+    """
     classic_activation_mechanism()
     gprotein_activation_by_free_active_par2()
     return
 
 
 def precoupled_activation_mechanism():
+    """Defines a mechanism of G-protein activation that includes receptor precoupling.
+
+    In the precoupled activation mechanism some portion of G-proteins can bind
+    to inactive PAR2. This precoupling of G-protein to inactive PAR2 can
+    facilitate faster G-protein activation once a receptor activating stimulus
+    is added.
+
+    Calls:
+        * gprotein_monomers
+        * gprotein_initials
+        * heterotrimer_precouples_free_inactive_par2
+        * gprotein_activation_by_2at_bound_active_par2
+    """
     gprotein_monomers()
     gprotein_initials()
     heterotrimer_precouples_free_inactive_par2()
@@ -516,6 +659,20 @@ def precoupled_activation_mechanism():
 
 
 def precoupled_activation_mechanism_with_constitutive_activity():
+    """Defines a mechanism of G-protein activation that includes receptor precoupling and constitutive PAR2 activity.
+
+    In the precoupled activation mechanism some portion of G-proteins can bind
+    to inactive PAR2. This precoupling of G-protein to inactive PAR2 can
+    facilitate faster G-protein activation once a receptor activating stimulus
+    is added. This mechanism also incorporates constitutive activity of PAR2.
+
+    Calls:
+        * gprotein_monomers
+        * gprotein_initials
+        * heterotrimer_precouples_free_inactive_par2
+        * gprotein_activation_by_2at_bound_active_par2
+        * gprotein_activation_by_free_active_par2
+    """
     gprotein_monomers()
     gprotein_initials()
     heterotrimer_precouples_free_inactive_par2()
@@ -525,6 +682,19 @@ def precoupled_activation_mechanism_with_constitutive_activity():
 
 
 def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
+    """Adds enhanced hydrolosis of GTP to GDP by Gaq when bound to PLC.
+    This addon function uses PLC so must be called after
+    calcium signaling modules that define the PLC monomer.
+    It adds one additional rule for 1st order catalytic hydrolosis of
+    GTP to GDP by Gaq when Gaq is bound to PLC (binding to PLC is part
+    of the calcium signaling modules):
+        Gaq:GTP:PLC ---> Gaq:GDP + PLC
+
+    Adds 1 additional parameter.
+
+    Parameters:
+        * k_gtp_to_gdp_plc -
+    """
     # 3. PLC binding enhanced conversion of GTP to GDP
     Parameter("k_gtp_to_gdp_plc", 1.33e-2 * 10)
     alias_model_components()
@@ -546,6 +716,17 @@ def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
 
 
 def observables():
+    """Defines observables for the G-protein states.
+
+    Defines 2 observables and 1 expression.
+
+    Observables:
+        totGaq = total amount of Gaq
+        aGaq = amount of active Gaq (bound to GTP)
+
+    Expressions:
+        active_Gaq_ratio = ratio of aGaq to totGaq
+    """
     alias_model_components()
     Observable("totGaq", Gaq())
     Observable(
