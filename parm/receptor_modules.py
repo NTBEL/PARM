@@ -1,3 +1,19 @@
+"""Defines functions for receptor activation, degradation, synthesis, and receptor observables.
+
+It includes three alternate mechanisms for receptor activation:
+    minimal_two_state_par2_activation
+    single_state_par2_activation
+    full_two_state_par2_activation
+As well as functions to add receptor degradation and synthesis:
+    occupied_par2_degradation
+    unoccupied_active_par2_degradation
+    denatured_par2_degradation
+    par2_synthesis
+And addon functions for precoupled receptor activation:
+    addon_single_state_precoupled_par2_activation
+    addon_minimal_twostate_precoupled_par2_activation
+"""
+
 # PySB components
 from pysb import (
     Monomer,
@@ -36,7 +52,9 @@ from . import defaults, units
 
 
 def receptor_agonist_monomers():
-    """Declares the monomers for 2AT (TAT) and PAR2."""
+    """Declares the monomers for 2AT (TAT) and PAR2.
+    Adds two monomers and 1 annotation.
+    """
     # PAR2 agonist 2AT as in Kang et al. https://doi.org/10.1021/acsnano.9b01993
     Monomer("TAT", ["b"])
     # PAR2:
@@ -54,7 +72,9 @@ def receptor_agonist_monomers():
 
 
 def agonist_initial():
-    """Declares the initial condition for 2AT (TAT)."""
+    """Declares the initial condition for 2AT (TAT).
+    Adds 1 parameter and 1 annotation.
+    """
     alias_model_components()
     # PAR2 agonist 2AT,
     # 330 nM for Fig 2D data from Kang et al. https://doi.org/10.1021/acsnano.9b01993
@@ -69,7 +89,9 @@ def agonist_initial():
 
 
 def total_receptor_initials():
-    """Declares parameters defining the total and denatured amounts of PAR2."""
+    """Declares parameters defining the total and denatured amounts of PAR2.
+    Adds 2 parameters and 1 expression
+    """
     # total PAR2
     # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
     # # tsA201 cells
@@ -91,7 +113,12 @@ def minimal_two_state_par2_activation():
     The miminal two-state activation mechanism is given by:
         2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
 
+    Calls functions:
+        receptor_agonist_monomers
+        agonist_initial
+        total_receptor_initials
     Declares initial conditions for PAR2 in state I and state D.
+    Adds 4 additional parameters and 2 additional expressions.
     """
 
     receptor_agonist_monomers()
@@ -158,7 +185,12 @@ def single_state_par2_activation():
     The single-state activation mechanism is given by:
         2AT + PAR2_I <---> TAT:PAR2_A
 
+    Calls functions:
+        receptor_agonist_monomers
+        agonist_initial
+        total_receptor_initials
     Declares initial conditions for PAR2 in state I and state D.
+    Adds 2 additional parameters and 2 additional expressions.
     """
     receptor_agonist_monomers()
     agonist_initial()
@@ -221,6 +253,8 @@ def constitutive_par2_activity():
 
     Declares a binding_amplification_factor parametr that controls how much
     stronger the 2AT binding is to the active form of PAR2.
+
+    Adds 3 parameters and 2 expressions.
     """
     Parameter("kf_PAR2_constitutively_active", 1e-3)  # 1/s
     Parameter("kr_PAR2_constitutively_active", 1e-1)  # 1/s
@@ -262,12 +296,33 @@ def constitutive_par2_activity():
 
 
 def full_two_state_par2_activation():
+    """Defines full two-state PAR2 activation by 2AT.
+    Combines minimal two-state activation with constitutive PAR2 activity to
+    encode a full two-state activation mechanism:
+        L + R  <---> LR
+          |           |
+        L + R* <---> LR*
+    Or reactions:
+        i. 2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
+       ii. PAR2_I <---> PAR2_A
+      iii. 2AT + PAR2_A <---> TAT:PAR2_A
+
+    Calls:
+        minimal_two_state_par2_activation
+        constitutive_par2_activity
+    """
     minimal_two_state_par2_activation()
     constitutive_par2_activity()
     return
 
 
 def occupied_par2_degradation():
+    """Defines degradation of 2AT bound PAR2.
+    1st order degradation of occupied PAR2 receptors:
+        PAR2:2AT ---> None
+
+    Adds 1 parameter.
+    """
     # PAR2 degradation
 
     # Occupied PAR2:
@@ -288,6 +343,12 @@ def occupied_par2_degradation():
 
 
 def denatured_par2_degradation():
+    """Defines degradation of denature PAR2.
+    1st order denatured PAR2 degradation:
+        PAR2_D:2AT ---> None
+
+    Adds one parameter.
+    """
     # Denatured PAR2:
     # As a default we can set the denatured PAR2 degradation to have the same
     # rate constant as bound PAR2 degradation, but we'll assume it could be
@@ -303,6 +364,12 @@ def denatured_par2_degradation():
 
 
 def unoccupied_active_par2_degradation():
+    """Defines degradation of free but active PAR2.
+    1st order active PAR2 degradation:
+        PAR2_A ---> None
+
+    Adds 1 parameter.
+    """
     # Free unbound but active PAR2:
     # rate constant for ligand-bound receptor degradation from
     # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
@@ -317,6 +384,12 @@ def unoccupied_active_par2_degradation():
 
 
 def par2_synthesis():
+    """Defines synthesis of PAR2.
+    Zero order synthesis of PAR2:
+        None ---> PAR2_I
+
+    Adds 1 parameter.
+    """
     # Zero-order synthesis of PAR2.
     # The rate constant for receptor synthesis from
     # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
@@ -331,6 +404,15 @@ def par2_synthesis():
 
 
 def addon_minimal_twostate_precoupled_par2_activation():
+    """Adds activation of PAR2 precoupled to G-protein to the mimimal two-state receptor activation mechanism.
+    This addon function uses the G-protein heterotrimer so must be called after
+    the G-protein mechanism modules. It two additional rules for 2AT binding
+    to the preceoupled receptor and reversible activation of receptor once
+    2AT is bound:
+        TAT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_I:Gaq:GDP:Gbg
+        TAT:PAR2_I:Gaq:GDB:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
+
+    """
     alias_model_components()
     # Alias the pre-coupled PAR2-Gprotein complex
     PAR2_i_Gaq_gdp_Gbg = (
@@ -373,6 +455,12 @@ def addon_minimal_twostate_precoupled_par2_activation():
 
 
 def addon_single_state_precoupled_par2_activation():
+    """Adds activation of PAR2 precoupled to G-protein to the single state receptor activation mechanism.
+    This addon function uses the G-protein heterotrimer so must be called after
+    the G-protein mechanism modules. It adds one additional rule for concerted
+    2AT binding to the preceoupled receptor and receptor activation:
+        TAT + PAR2_I:Gaq:GDP:Gbg <---> TAT:PAR2_A:Gaq:GDP:Gbg
+    """
     alias_model_components()
     # Alias the pre-coupled PAR2-Gprotein complex
     PAR2_i_Gaq_gdp_Gbg = (
@@ -401,6 +489,21 @@ def addon_single_state_precoupled_par2_activation():
 
 
 def observables():
+    """Defines observables for the receptor states.
+
+    Defines 4 observables and 3 expressions.
+
+    Observables:
+        iPAR2 = inactive PAR2
+        aPAR2 = active PAR2
+        dPAR2 = denatured PAR2
+        occupied_PAR2 = PAR2 with 2AT bound
+
+    Expressions:
+        totPAR2 = total amount of inactive and active PAR2
+        par2_active_ratio = ratio of aPAR2 to totPAR2
+        par2_occupancy = ratio of occupied_PAR2 to totPAR2 (receptor occupancy)
+    """
     alias_model_components()
     # Inactive PAR2
     Observable("iPAR2", PAR2(state="I"))
