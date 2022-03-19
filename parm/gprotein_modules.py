@@ -701,7 +701,7 @@ def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     Gaq_gtp_PLC = (
         Gaq(bpar=None, bgdp=3, bgbg=1) ** CELL_MEMB
         % GTP(b=3) ** CELL_MEMB
-        % PLC(bgaq=1) ** CELL_MEMB
+        % PLC(bgaq=1, bpip2=WILD, bca=WILD) ** CELL_MEMB
     )
     # Alias the complex Gaq:GDP
     Gaq_gdp = Gaq(bpar=None, bgdp=3, bgbg=None) ** CELL_MEMB % GDP(b=3) ** CELL_MEMB
@@ -709,7 +709,7 @@ def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     #   Gaq:GTP:PLC ---> Gaq:GDP + PLC
     Rule(
         "gtp_hydrolosis_plc",
-        Gaq_gtp_PLC >> Gaq_gdp + PLC(bgaq=None, bpip2=None) ** CYTOSOL,
+        Gaq_gtp_PLC >> Gaq_gdp + PLC(bgaq=None, bpip2=WILD, bca=WILD) ** CYTOSOL,
         k_gtp_to_gdp_plc,
     )
     return
