@@ -65,5 +65,8 @@ def pre_equilibration(model, time_search, parameters=None, tolerance=1e-6):
         conc_eq = y[time_to_equilibration[1]]
         all_times_eq[n] = time_to_equilibration
         all_conc_eq[n] = conc_eq
-
-    return all_times_eq, all_conc_eq
+    if solver.nsims == 1:
+        cytoCa_eq = [solver.observables['cytoCa'][time_to_equilibration[1]]]
+    else:
+        cytoCa_eq = [obs['cytoCa'][time_to_equilibration[1]] for obs in solver.observables]
+    return all_times_eq, all_conc_eq, cytoCa_eq
