@@ -7,7 +7,6 @@ It includes competitive and noncompetive antagonsim:
 """
 
 
-
 # PySB components
 from pysb import (
     Monomer,
@@ -95,12 +94,15 @@ def competitive_par2_antagonist():
     # Competitive binding of the Antoginst
     #   Ant + PAR2_I <---> Ant:PAR2_I
     bind(
-        Ant()**EXTRACELLULAR, 'b',
-        PAR2(state='I')**CELL_MEMB, 'bortho',
+        Ant() ** EXTRACELLULAR,
+        "b",
+        PAR2(state="I") ** CELL_MEMB,
+        "bortho",
         [kf_PAR2_bind_Ant, kr_PAR2_bind_Ant],
     )
 
     return
+
 
 def noncompetitive_par2_antagonist():
     """Defines a noncompetitive PAR2 antagonist that binds an allosteric location relative to 2AT.
@@ -160,26 +162,34 @@ def noncompetitive_par2_antagonist():
     # nonompetitive binding of the Antoginst to an allosteric site
     #   Ant + PAR2_I <---> Ant:PAR2_I
     bind(
-        Ant()**EXTRACELLULAR, 'b',
-        PAR2(state='I', bortho=WILD, bgaq=WILD)**CELL_MEMB, 'ballo',
+        Ant() ** EXTRACELLULAR,
+        "b",
+        PAR2(state="I", bortho=WILD, bgaq=WILD) ** CELL_MEMB,
+        "ballo",
         [kf_PAR2_bind_Ant, kr_PAR2_bind_Ant],
     )
     #   Ant + PAR2_A <---> Ant:PAR2_A
     bind(
-        Ant()**EXTRACELLULAR, 'b',
-        PAR2(state='A', bortho=WILD, bgaq=WILD)**CELL_MEMB, 'ballo',
+        Ant() ** EXTRACELLULAR,
+        "b",
+        PAR2(state="A", bortho=WILD, bgaq=WILD) ** CELL_MEMB,
+        "ballo",
         [kf_PAR2_bind_Ant, kr_PAR2_bind_Ant],
     )
     #    2AT + PAR2_I:Ant <---> TAT:PAR2_I:Ant
     bind(
-        TAT()**EXTRACELLULAR, 'b',
-        PAR2(state='I', ballo=ANY, bgaq=WILD)**CELL_MEMB, 'bortho',
+        TAT() ** EXTRACELLULAR,
+        "b",
+        PAR2(state="I", ballo=ANY, bgaq=WILD) ** CELL_MEMB,
+        "bortho",
         [kf_PAR2_bind_TAT, kr_PAR2_bind_TAT_allo],
     )
     #    2AT + PAR2_A:Ant <---> TAT:PAR2_A:Ant
     bind(
-        TAT()**EXTRACELLULAR, 'b',
-        PAR2(state='A', ballo=ANY, bgaq=WILD)**CELL_MEMB, 'bortho',
+        TAT() ** EXTRACELLULAR,
+        "b",
+        PAR2(state="A", ballo=ANY, bgaq=WILD) ** CELL_MEMB,
+        "bortho",
         [kf_PAR2_bind_TAT, kr_PAR2_bind_TAT_allo],
     )
 
