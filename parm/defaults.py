@@ -7,9 +7,13 @@ from . import units
 KF_BIND = 1e-6  # 1/(molecule/pL*s)
 # Default dissociation rate from
 # Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
+# Note the broader range of plausible dissociation rates suggested by Aldridgle et al.
+# is 0.001 - 0.01 1/s
 KR_BIND = 1e-3  # 1/s
 # kcat for the "average enzyme" from
 # Bar-Even et al. https://doi.org/10.1021/bi2002289
+# Note the broader range of plausible catalytic rates suggested by Aldridgle et al.
+# is 1 - 10 1/s
 KCAT = 10  # 1/s
 
 # Default signaling protein concentration range
@@ -30,8 +34,10 @@ K_DEGRADE = 1  # 1/s
 # Default unidirection conversion rate.
 K_CONVERT = 1  # 1/s
 
-# Default cellular volume of 1 pL (or 10^-12 L) assumed in
-# Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
+# Default cellular volume of 1 pL (or 10^-12 L) from
+# Aldridge et al. https://doi.org/10.1038/ncb1497
+# Also assumed by Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
+# for their apoptosis model.
 VOL_CELL = 1  # pL
 
 # Default membrane thickness for effective volume of membrane compartments.
