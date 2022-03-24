@@ -746,6 +746,32 @@ def gaq_activated_calcium_signaling():
     return
 
 
+def gaq_activated_calcium_signaling_simplified():
+    """Combines mechanistic elements to define the calcium signaling pathway.
+
+    This simplified version of the calcium pathway does not include calcium
+    buffering in the cytosol or cytosolic calcium feedback mechanisms.
+
+    Calls:
+        * calcium_signal_monomers
+        * calcium_signal_initials
+        * plc_binds_gaq_and_catalyzes_pip2_to_ip3
+        * ip3_binds_ip3r
+        * ip3r_transports_er_calcium_to_cytosol
+        * calcium_extrusion_and_influx
+        * ip3_degradation
+
+    """
+    calcium_signal_monomers()
+    calcium_signal_initials()
+    plc_binds_gaq_and_catalyzes_pip2_to_ip3()
+    ip3_binds_ip3r()
+    ip3r_transports_er_calcium_to_cytosol()
+    calcium_extrusion_and_influx()
+    ip3_degradation()
+    return
+
+
 def observables():
     """Defines observables for the calcium signaling pathway.
 
@@ -795,8 +821,10 @@ def observables():
     # Bound cytosolic calcium.
     Observable("bound_cytoCa", Ca(b=ANY) ** CYTOSOL)
     # Buffered caclcium.
-    Observable("buffered_cytoCa", CalciumBuffer(b=ANY) ** CYTOSOL)
-
+    try:
+        Observable("buffered_cytoCa", CalciumBuffer(b=ANY) ** CYTOSOL)
+    except:
+        pass
     return
 
 
