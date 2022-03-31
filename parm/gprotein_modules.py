@@ -509,6 +509,7 @@ def gprotein_activation_by_free_active_par2():
     )
     return
 
+
 def single_step_catalytic_gprotein_activation_by_par2():
     """Defines catalytic activation of the G-protein by agonist-bound active PAR2.
 
@@ -535,22 +536,31 @@ def single_step_catalytic_gprotein_activation_by_par2():
     # Since the binding rate is already molecules per cell we can multiply by
     # the V_CM value here to negate the compartment scaling applied later to the
     # reaction.
-    Parameter('kf_PAR2_activate_Gprotein', 1e-5 * V_CM.get_value())
+    Parameter("kf_PAR2_activate_Gprotein", 1e-5 * V_CM.get_value())
     alias_model_components()
-    tat_PAR2_a = PAR2(state='A', bortho=ANY, bgaq=None)**CELL_MEMB
+    tat_PAR2_a = PAR2(state="A", bortho=ANY, bgaq=None) ** CELL_MEMB
     # Alias the free Gprotein heterotrimer
-    Gaq_gdp_Gbg = Gaq(bpar=None, bgbg=3, bgdp=4)**CELL_MEMB % GDP(b=3)**CELL_MEMB % Gbg(b=4)**CELL_MEMB
+    Gaq_gdp_Gbg = (
+        Gaq(bpar=None, bgbg=3, bgdp=4) ** CELL_MEMB
+        % GDP(b=3) ** CELL_MEMB
+        % Gbg(b=4) ** CELL_MEMB
+    )
     # Alias the complex Gaq:GTP
-    Gaq_gtp = (Gaq(bpar=None, bgdp=3, bgbg=None)**CELL_MEMB % GTP(b=3)**CELL_MEMB)
+    Gaq_gtp = Gaq(bpar=None, bgdp=3, bgbg=None) ** CELL_MEMB % GTP(b=3) ** CELL_MEMB
     # Define the reaction rule.
-    Rule('par2_single_step_activate_Gprotein', tat_PAR2_a + Gaq_gdp_Gbg >>
-                              tat_PAR2_a + Gaq_gtp + Gbg(b=None)**CELL_MEMB,
-                              kf_PAR2_activate_Gprotein)
-
-    Annotation(par2_activate_Gprotein,
-               'https://identifiers.org/doi:10.1073/pnas.1834247100',
-                predicate='isDerivedFrom')
+    Rule(
+        "par2_single_step_activate_Gprotein",
+        tat_PAR2_a + Gaq_gdp_Gbg >> tat_PAR2_a + Gaq_gtp + Gbg(b=None) ** CELL_MEMB,
+        kf_PAR2_activate_Gprotein,
+    )
+    alias_model_components()
+    Annotation(
+        par2_single_step_activate_Gprotein,
+        "https://identifiers.org/doi:10.1073/pnas.1834247100",
+        predicate="isDerivedFrom",
+    )
     return
+
 
 def gaq_hydrolyzes_gtp_to_gdp():
     """Defines hydrolosis of GTP to GDP when bound to free Gaq.
@@ -649,6 +659,7 @@ def rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     Annotation(RGS, "https://identifiers.org/uniprot:P49798", predicate="hasVersion")
     return
 
+
 def rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp_implicit_single_step():
     """Defines an implicit regulator of g-protein signaling that promotes hydrolosis of GTP.
 
@@ -678,6 +689,7 @@ def rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp_implicit_single_step():
     # Gaq can hydolyze GTP to GDP faster due to effect of RGS
     Rule("gtp_hydrolosis_rgs", Gaq_gtp >> Gaq_gdp, k_gtp_to_gdp_rgs)
     return
+
 
 def reversible_heterotrimer_reassociation():
     """Defines reassociation of the G-protein heterotrimer by an reversible binding reaction.
@@ -713,12 +725,17 @@ def reversible_heterotrimer_reassociation():
     alias_model_components()
     Gaq_gdp = Gaq(bpar=None, bgdp=3) ** CELL_MEMB % GDP(b=3) ** CELL_MEMB
     bind_complex(
-        Gaq_gdp, 'bgbg',
-        Gbg()**CELL_MEMB, 'b',
-        [kf_reversible_heterotrimer_reassociation,
-         kr_reversible_heterotrimer_reassociation],
+        Gaq_gdp,
+        "bgbg",
+        Gbg() ** CELL_MEMB,
+        "b",
+        [
+            kf_reversible_heterotrimer_reassociation,
+            kr_reversible_heterotrimer_reassociation,
+        ],
     )
     return
+
 
 def irreversible_heterotrimer_reassociation():
     """Defines reassociation of the G-protein heterotrimer by an irreversible binding reaction.
@@ -757,11 +774,12 @@ def irreversible_heterotrimer_reassociation():
     )
 
     Rule(
-        'irrev_heterotrimer_reassociation',
-         Gaq_gdp + Gbg(b=None)**CELL_MEMB >> Gaq_gdp_Gbg,
-         kf_irrev_heterotrimer_reassociation,
+        "irrev_heterotrimer_reassociation",
+        Gaq_gdp + Gbg(b=None) ** CELL_MEMB >> Gaq_gdp_Gbg,
+        kf_irrev_heterotrimer_reassociation,
     )
     return
+
 
 def classic_activation_mechanism():
     """Defines the classic mechanism of G-protein activation.
@@ -868,7 +886,7 @@ def yi2003_heterotrimeric_gprotein_cycle():
         * irreversible_heterotrimer_reassociation
         * rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp_implicit_single_step
     """
-    
+
     gprotein_monomers()
     gprotein_initials()
     single_step_catalytic_gprotein_activation_by_par2()
@@ -877,10 +895,11 @@ def yi2003_heterotrimeric_gprotein_cycle():
     # Update the nominal value of the autocatalytic conversion of GTP to GDP
     # to match the value in Yi et al.:
     #    k_Gd0 = 0.004 1/s
-    k_gtp_to_gdp_auto.value = 0.004 # 1/s
+    k_gtp_to_gdp_auto.value = 0.004  # 1/s
     irreversible_heterotrimer_reassociation()
     rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp_implicit_single_step()
     return
+
 
 def addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp():
     """Adds enhanced hydrolosis of GTP to GDP by Gaq when bound to PLC.
