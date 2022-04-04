@@ -501,6 +501,191 @@ def calcium_extrusion_and_influx():
         Ca(b=None) ** EXTRACELLULAR >> Ca(b=None) ** CYTOSOL,
         k_Ca_extra_to_cyt,
     )
+    return
+
+
+def calcium_cytosol_er_flux():
+    """Defines reactions control flux of Ca2+ from the cytosol and ER lumen.
+
+    This function defines two first order reactions to control transfer of Ca2+
+    from the cytosol (back) to the ER lumen and its transfer from the ER lumen
+    space into the cytosol. This function allows reloading of ER Ca2+ store
+    after release. We assume that at steady-state in the abscence of agonist the
+    extrusion and influx are balanced to maintain the resting cyctosolic
+    concentration of free Ca2+.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+V_ERL
+        2. Ca2+_ERL ---> Ca2+_CYTO
+
+    Adds 2 parameters.
+
+    Parameters:
+        k_Ca_cyt_to_er - 1st-order rate constant for calcium transfer from
+            the cytosol to the ER lumen.
+        k_Ca_er_to_cyt - 1st-order rate constant for calcium transfer from the
+            ER lumen to the cytosol.
+    """
+    # Cytosolic Ca2+ regulation
+
+    # cytosol to ER lumen
+    Parameter("k_Ca_cyt_to_er", 4)  # 1/s
+    alias_model_components()
+    # ER lumen to cytosol
+    # As a first estimate assume that the initial concentration of cytosolic
+    # Ca2+ is its equilibrium value before any agonist is added and the rate out
+    # of the cytosol equals the rate in. However, note that this doesn't take
+    # into account any other reactions that can change the cytosolic calcium
+    # concentration such as equlibration of Ca2+ buffer binding.
+    Parameter("k_Ca_er_to_cyt", k_Ca_cyt_to_er.value * Ca_C_0.value / Ca_E_0.value)
+    alias_model_components()
+
+    # cytosol to ER lumen
+    Rule(
+        "Ca_cyt_to_er",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** ER_LUMEN,
+        k_Ca_cyt_to_er,
+    )
+    # ER lumen to cytosol.
+    Rule(
+        "Ca_er_to_cyt",
+        Ca(b=None) ** ER_LUMEN >> Ca(b=None) ** CYTOSOL,
+        k_Ca_er_to_cyt,
+    )
+    return
+
+
+def calcium_extrusion_and_influx_mk():
+    """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
+
+    This function defines two first order reactions with rate constant
+    expressions that yield  Michaelis-Menten kinetics to control extrusion of
+    Ca2+ from the cytosol to the extracellular space and its influx from the
+    extracellular space into the cytosol. This is based on the decay in the Ca2+
+    FRET signal seen in Figure S3C of Kang et al. 2019
+    (https://doi.org/10.1021/acsnano.9b01993) which we assume is largely due to
+    first-order excretion/extrusion of excess Ca2+ from the released ER store
+    into the extracellular space by cell membrane ion channels. We assume that
+    at steady-state in the abscence of agonist the extrusion and influx should
+    be balanced to maintain the resting cyctosolic concentration of free Ca2+, but
+    this must enforced when training model.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+_EXTRA
+        2. Ca2+_EXTRA ---> Ca2+_CYTO
+
+    Adds 4 parameters and two expressions.
+
+    Parameters:
+        Vmax_Ca_cyt_to_extra
+        Km_Ca_cyt_to_extra
+        Vmax_Ca_extra_to_cyt
+        Km_Ca_extra_to_cyt
+
+    Expressions:
+        k_Ca_cyt_to_extra - 1st-order rate constant for calcium extrusion from
+            the cytosol to the extracellular space.
+        k_Ca_extra_to_cyt - 1st-order rate constant for calcium influx from the
+            extracellular space to the cytosol.
+    """
+
+    alias_model_components()
+    # cytosol to extracellular space
+    # Set a nominal max rate of 20 uM/s.
+    Parameter("Vmax_Ca_cyt_to_extra", 20 * units.microM_to_molec_per_pL * Vcyto.value)
+    # Nominal value of 1 uM.
+    Parameter("Km_Ca_cyt_to_extra", 1 * units.microM_to_molec_per_pL * Vcyto.value)
+    # extracellular space to cytosol
+    # Nominal value of 10 uM/s.
+    Parameter("Vmax_Ca_extra_to_cyt", 10 * units.microM_to_molec_per_pL * Vcyto.value)
+    # Nominal value of 10 mM.
+    Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
+    # Some 'private' observables to monitor the ER and cytoslic calcium for
+    # Michaelis-Menten rate.
+    Observable("_Ca_extra", Ca(b=None) ** EXTRACELLULAR)
+    Observable("_Ca_cyt", Ca(b=None) ** CYTOSOL)
+    alias_model_components()
+    # First order rate constants based on MK rate.
+    Expression(
+        "k_Ca_cyt_to_extra", Vmax_Ca_cyt_to_extra / (_Ca_cyt + Km_Ca_cyt_to_extra)
+    )  # 1/s
+    Expression(
+        "k_Ca_extra_to_cyt", Vmax_Ca_extra_to_cyt / (_Ca_extra + Km_Ca_extra_to_cyt)
+    )
+    alias_model_components()
+    # cytosol to extracellular space
+    Rule(
+        "Ca_cyt_to_extra",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** EXTRACELLULAR,
+        k_Ca_cyt_to_extra,
+    )
+    # extracellular space to cytosol.
+    Rule(
+        "Ca_extra_to_cyt",
+        Ca(b=None) ** EXTRACELLULAR >> Ca(b=None) ** CYTOSOL,
+        k_Ca_extra_to_cyt,
+    )
+    return
+
+
+def calcium_cytosol_er_flux_mk():
+    """Defines reactions control flux of Ca2+ from the cytosol and ER lumen.
+
+    This function defines two first order reactions to control transfer of Ca2+
+    from the cytosol (back) to the ER lumen and its transfer from the ER lumen
+    space into the cytosol. This function allows reloading of ER Ca2+ store
+    after release. We assume that at steady-state in the abscence of agonist the
+    extrusion and influx are balanced to maintain the resting cyctosolic
+    concentration of free Ca2+.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+V_ERL
+        2. Ca2+_ERL ---> Ca2+_CYTO
+
+    Adds 2 parameters.
+
+    Parameters:
+        k_Ca_cyt_to_er - 1st-order rate constant for calcium transfer from
+            the cytosol to the ER lumen.
+        k_Ca_er_to_cyt - 1st-order rate constant for calcium transfer from the
+            ER lumen to the cytosol.
+    """
+    # Cytosolic Ca2+ regulation
+
+    # cytosol to ER lumen
+    alias_model_components()
+    Parameter("Vmax_Ca_cyt_to_er", 20 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Km_Ca_cyt_to_er", 0.65 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Vmax_Ca_er_to_cyt", 26 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Km_Ca_er_to_cyt", 5000 * units.microM_to_molec_per_pL * Ver.value)
+    Observable("__Ca_er", Ca(b=None) ** ER_LUMEN)
+    Observable("__Ca_cyt", Ca(b=None) ** CYTOSOL)
+    alias_model_components()
+    Expression(
+        "k_Ca_cyt_to_er", Vmax_Ca_cyt_to_er / (__Ca_cyt + Km_Ca_cyt_to_er)
+    )  # 1/s
+    Expression("k_Ca_er_to_cyt", Vmax_Ca_er_to_cyt / (__Ca_er + Km_Ca_er_to_cyt))
+    alias_model_components()
+    # ER lumen to cytosol
+    # As a first estimate assume that the initial concentration of cytosolic
+    # Ca2+ is its equilibrium value before any agonist is added and the rate out
+    # of the cytosol equals the rate in. However, note that this doesn't take
+    # into account any other reactions that can change the cytosolic calcium
+    # concentration such as equlibration of Ca2+ buffer binding.
+
+    # cytosol to ER lumen
+    Rule(
+        "Ca_cyt_to_er",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** ER_LUMEN,
+        k_Ca_cyt_to_er,
+    )
+    # ER lumen to cytosol.
+    Rule(
+        "Ca_er_to_cyt",
+        Ca(b=None) ** ER_LUMEN >> Ca(b=None) ** CYTOSOL,
+        k_Ca_er_to_cyt,
+    )
+    return
 
 
 def regulation_of_cytosolic_calcium_concentration():
@@ -513,10 +698,12 @@ def regulation_of_cytosolic_calcium_concentration():
     Calls:
         * cytosolic_calcium_buffering
         * calcium_extrusion_and_influx
+        * calcium_cytosol_er_flux
     """
 
     cytosolic_calcium_buffering()
-    calcium_extrusion_and_influx()
+    calcium_extrusion_and_influx_mk()
+    calcium_cytosol_er_flux_mk()
     return
 
 
