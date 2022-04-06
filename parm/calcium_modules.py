@@ -597,7 +597,7 @@ def calcium_extrusion_and_influx_mk():
     Parameter("Km_Ca_cyt_to_extra", 1 * units.microM_to_molec_per_pL * Vcyto.value)
     # extracellular space to cytosol
     # Nominal value of 10 uM/s.
-    Parameter("Vmax_Ca_extra_to_cyt", 10 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Vmax_Ca_extra_to_cyt", 2 * units.microM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 10 mM.
     Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
     # Some 'private' observables to monitor the ER and cytoslic calcium for
@@ -702,8 +702,8 @@ def regulation_of_cytosolic_calcium_concentration():
     """
 
     cytosolic_calcium_buffering()
-    calcium_extrusion_and_influx()
-    calcium_cytosol_er_flux()
+    calcium_extrusion_and_influx_mk()
+    calcium_cytosol_er_flux_mk()
     return
 
 
@@ -1034,6 +1034,7 @@ def observables():
     Expression("Ca_num_to_nM", 1 / (Vcyto * units.nM_to_molec_per_pL))
     alias_model_components()
     Expression("cytoCa_nM", cytoCa * Ca_num_to_nM)
+    Expression("erCa_uM", erCa / (Ver * units.microM_to_molec_per_pL))
     # Bound cytosolic calcium.
     Observable("bound_cytoCa", Ca(b=ANY) ** CYTOSOL)
     # Buffered caclcium.
@@ -1135,15 +1136,15 @@ def fret_calcium_indicator_tnxxl():
 def degradation_of_excess_cytosolic_calcium():
     alias_model_components()
     Parameter("k_cytoCa_loss", 4)
-    Observable("___Ca_cyt", Ca(b=None) ** CYTOSOL)
     alias_model_components()
+
     Expression(
-        "_k_cytoCa_loss",
+        "k_cytoCa_loss_piecewise",
         Piecewise(
-            (k_cytoCa_loss, ___Ca_cyt > _Ca_C_resting),
+            (k_cytoCa_loss, cytoCa > Ca_C_resting),
             (0, True),
         ),
     )
     alias_model_components()
-    degrade(Ca(b=None) ** CYTOSOL, _k_cytoCa_loss)
+    degrade(Ca(b=None) ** CYTOSOL, k_cytoCa_loss_piecewise)
     return
