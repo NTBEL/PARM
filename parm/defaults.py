@@ -5,15 +5,16 @@ from . import units
 # Aldridge et al. https://doi.org/10.1038/ncb1497
 # Note that KF_BIND is equivalent to kf/(1e-12) / N_A for kf in 1/(M*s).
 KF_BIND = 1e-6  # 1/(molecule/pL*s)
-# Default dissociation rate from
-# Albeck et al. https://doi.org/10.1371/journal.pbio.0060299
-# Note the broader range of plausible dissociation rates suggested by Aldridgle et al.
-# is 0.001 - 0.01 1/s
-KR_BIND = 1e-3  # 1/s
+# Default dissociation rate from Albeck et al.
+# https://doi.org/10.1371/journal.pbio.0060299
+# is 1e-3 1/s.
+# Note that the range of plausible dissociation rates suggested by Aldridgle et
+# al. is 0.001 - 0.01 1/s
+KR_BIND = 1e-3  # 1/s for concentrations in number/pL
 # kcat for the "average enzyme" from
-# Bar-Even et al. https://doi.org/10.1021/bi2002289
+# Bar-Even et al. https://doi.org/10.1021/bi2002289 is 10 1/s.
 # Note the broader range of plausible catalytic rates suggested by Aldridgle et al.
-# is 1 - 10 1/s
+# is 1 - 10 1/s.
 KCAT = 10  # 1/s
 
 # Default signaling protein concentration range
