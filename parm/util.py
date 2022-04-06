@@ -87,4 +87,4 @@ def pre_equilibration(model, time_search, parameters=None, tolerance=1e-6):
             obs["cytoCa"][time_to_equilibration[1]] for obs in solver.observables
         ]
         erCa_eq = [obs["erCa"][time_to_equilibration[1]] for obs in solver.observables]
-    return all_times_eq, all_conc_eq, cytoCa_eq
+    return all_times_eq, all_conc_eq, cytoCa_eq, erCa_eq
