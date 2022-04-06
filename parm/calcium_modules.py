@@ -554,7 +554,6 @@ def calcium_cytosol_er_flux():
     )
     return
 
-
 def calcium_extrusion_and_influx_mk():
     """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
 
@@ -592,26 +591,22 @@ def calcium_extrusion_and_influx_mk():
     alias_model_components()
     # cytosol to extracellular space
     # Set a nominal max rate of 20 uM/s.
-    Parameter("Vmax_Ca_cyt_to_extra", 20 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Vmax_Ca_cyt_to_extra', 20 * units.microM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 1 uM.
-    Parameter("Km_Ca_cyt_to_extra", 1 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Km_Ca_cyt_to_extra', 1 * units.microM_to_molec_per_pL * Vcyto.value)
     # extracellular space to cytosol
     # Nominal value of 10 uM/s.
-    Parameter("Vmax_Ca_extra_to_cyt", 10 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Vmax_Ca_extra_to_cyt', 10 * units.microM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 10 mM.
-    Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
+    Parameter('Km_Ca_extra_to_cyt', 10000 * units.microM_to_molec_per_pL * Ver.value)
     # Some 'private' observables to monitor the ER and cytoslic calcium for
     # Michaelis-Menten rate.
-    Observable("_Ca_extra", Ca(b=None) ** EXTRACELLULAR)
-    Observable("_Ca_cyt", Ca(b=None) ** CYTOSOL)
+    Observable('_Ca_extra', Ca(b=None)**EXTRACELLULAR)
+    Observable('_Ca_cyt', Ca(b=None)**CYTOSOL)
     alias_model_components()
     # First order rate constants based on MK rate.
-    Expression(
-        "k_Ca_cyt_to_extra", Vmax_Ca_cyt_to_extra / (_Ca_cyt + Km_Ca_cyt_to_extra)
-    )  # 1/s
-    Expression(
-        "k_Ca_extra_to_cyt", Vmax_Ca_extra_to_cyt / (_Ca_extra + Km_Ca_extra_to_cyt)
-    )
+    Expression("k_Ca_cyt_to_extra", Vmax_Ca_cyt_to_extra/(_Ca_cyt + Km_Ca_cyt_to_extra))  # 1/s
+    Expression("k_Ca_extra_to_cyt", Vmax_Ca_extra_to_cyt/(_Ca_extra + Km_Ca_extra_to_cyt))
     alias_model_components()
     # cytosol to extracellular space
     Rule(
@@ -626,7 +621,6 @@ def calcium_extrusion_and_influx_mk():
         k_Ca_extra_to_cyt,
     )
     return
-
 
 def calcium_cytosol_er_flux_mk():
     """Defines reactions control flux of Ca2+ from the cytosol and ER lumen.
@@ -654,17 +648,15 @@ def calcium_cytosol_er_flux_mk():
 
     # cytosol to ER lumen
     alias_model_components()
-    Parameter("Vmax_Ca_cyt_to_er", 20 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("Km_Ca_cyt_to_er", 0.65 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("Vmax_Ca_er_to_cyt", 26 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("Km_Ca_er_to_cyt", 5000 * units.microM_to_molec_per_pL * Ver.value)
-    Observable("__Ca_er", Ca(b=None) ** ER_LUMEN)
-    Observable("__Ca_cyt", Ca(b=None) ** CYTOSOL)
+    Parameter('Vmax_Ca_cyt_to_er', 20 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Km_Ca_cyt_to_er', 0.65 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Vmax_Ca_er_to_cyt', 26 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter('Km_Ca_er_to_cyt', 5000 * units.microM_to_molec_per_pL * Ver.value)
+    Observable('__Ca_er', Ca(b=None)**ER_LUMEN)
+    Observable('__Ca_cyt', Ca(b=None)**CYTOSOL)
     alias_model_components()
-    Expression(
-        "k_Ca_cyt_to_er", Vmax_Ca_cyt_to_er / (__Ca_cyt + Km_Ca_cyt_to_er)
-    )  # 1/s
-    Expression("k_Ca_er_to_cyt", Vmax_Ca_er_to_cyt / (__Ca_er + Km_Ca_er_to_cyt))
+    Expression("k_Ca_cyt_to_er", Vmax_Ca_cyt_to_er/(__Ca_cyt + Km_Ca_cyt_to_er))  # 1/s
+    Expression("k_Ca_er_to_cyt", Vmax_Ca_er_to_cyt/(__Ca_er + Km_Ca_er_to_cyt))
     alias_model_components()
     # ER lumen to cytosol
     # As a first estimate assume that the initial concentration of cytosolic
@@ -672,6 +664,7 @@ def calcium_cytosol_er_flux_mk():
     # of the cytosol equals the rate in. However, note that this doesn't take
     # into account any other reactions that can change the cytosolic calcium
     # concentration such as equlibration of Ca2+ buffer binding.
+
 
     # cytosol to ER lumen
     Rule(
@@ -686,7 +679,6 @@ def calcium_cytosol_er_flux_mk():
         k_Ca_er_to_cyt,
     )
     return
-
 
 def regulation_of_cytosolic_calcium_concentration():
     """Reactions to regulate the concentration of free cytosolic calcium.
@@ -958,6 +950,32 @@ def gaq_activated_calcium_signaling_simplified():
     ip3_degradation()
     return
 
+def gaq_activated_calcium_signaling_without_influx_extrusion():
+    """Combines mechanistic elements to define the calcium signaling pathway.
+
+    This simplified version of the calcium pathway does not include calcium
+    buffering in the cytosol or cytosolic calcium feedback mechanisms.
+
+    Calls:
+        * calcium_signal_monomers
+        * calcium_signal_initials
+        * plc_binds_gaq_and_catalyzes_pip2_to_ip3
+        * ip3_binds_ip3r
+        * ip3r_transports_er_calcium_to_cytosol
+        * cytosolic_calcium_buffering
+        * cytosolic_calcium_feedback
+        * ip3_degradation
+
+    """
+    calcium_signal_monomers()
+    calcium_signal_initials()
+    plc_binds_gaq_and_catalyzes_pip2_to_ip3()
+    ip3_binds_ip3r()
+    ip3r_transports_er_calcium_to_cytosol()
+    cytosolic_calcium_buffering()
+    cytosolic_calcium_feedback()
+    ip3_degradation()
+    return
 
 def observables():
     """Defines observables for the calcium signaling pathway.
@@ -1101,4 +1119,20 @@ def fret_calcium_indicator_tnxxl():
     alias_model_components()
     # Exp. FRET ratio change which is relative to the baseline - dR/R = (Rc-Rb)/Rb
     Expression("FRET", (Frc_curr + Frc_base) / (-Frc_base + 1))
+    return
+
+def degradation_of_excess_cytosolic_calcium():
+    alias_model_components()
+    Parameter('k_cytoCa_loss', 4)
+    Observable('___Ca_cyt', Ca(b=None)**CYTOSOL)
+    alias_model_components()
+    Expression(
+        '_k_cytoCa_loss',
+        Piecewise(
+            (k_cytoCa_loss, ___Ca_cyt > _Ca_C_resting ),
+            (0, True),
+        ),
+    )
+    alias_model_components()
+    degrade(Ca(b=None)**CYTOSOL, _k_cytoCa_loss)
     return
