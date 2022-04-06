@@ -973,6 +973,7 @@ def observables():
         cytoCa = amount of free Ca2+ in the cytosol.
         bound_cytoCa = amount of cytosolic Ca2+ bound to something
         buffered_cytoCa = amount of cytosolic Ca2+ bound to the calcium buffer protein.
+        PLC_Ca = amount of PLC with Ca2+ bound to the calcium binding site.
 
     Expressions:
         active_IP3R_ratio = ratio of aIP3R to totIP3R
@@ -1012,6 +1013,9 @@ def observables():
         Observable("buffered_cytoCa", CalciumBuffer(b=ANY) ** CYTOSOL)
     except:
         pass
+    # Calcium bound PLC
+    Observable("PLC_Ca", PLC(bca=ANY))
+
     return
 
 
