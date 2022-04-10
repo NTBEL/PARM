@@ -129,7 +129,8 @@ def calcium_signal_initials():
     Parameter("IP3_0", 0)
     Parameter("DAG_0", 0)
     # IP3R
-    Parameter("IP3R_0", defaults.SPC * Ver.value)
+    # Set nominal as 1/micrometer^2
+    Parameter("IP3R_0", 1 * SAcell.value)
     # ER Ca2+ store
     # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
     # around 525 microM as reported in
@@ -206,7 +207,7 @@ def plc_binds_gaq_and_catalyzes_pip2_to_ip3():
     # binding to PLC and that enhances the catalysis rate which is similar to
     # how Keizer and De Young (Biophys J. 61:549-660 1992) implement
     # calcium feedback on IP3 production.
-    Parameter("kcat_PIP2_to_IP3", (22.85 + 27.89) / (2 * 10))
+    Parameter("kcat_PIP2_to_IP3", (22.85 + 27.89) / 4)
     alias_model_components()
     # PLC activation by binding Gaq:
     #    Gaq_A + PLC <---> Gaq_A:PLC
@@ -592,14 +593,21 @@ def calcium_extrusion_and_influx_mk():
     alias_model_components()
     # cytosol to extracellular space
     # Set a nominal max rate of 20 uM/s.
-    Parameter("Vmax_Ca_cyt_to_extra", 20 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Vmax_Ca_cyt_to_extra", 10 * units.microM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 1 uM.
     Parameter("Km_Ca_cyt_to_extra", 1 * units.microM_to_molec_per_pL * Vcyto.value)
     # extracellular space to cytosol
-    # Nominal value of 10 uM/s.
-    Parameter("Vmax_Ca_extra_to_cyt", 2 * units.microM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 10 mM.
     Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
+    alias_model_components()
+    # Nominal value of 10 uM/s.
+    Parameter(
+        "Vmax_Ca_extra_to_cyt",
+        Vmax_Ca_cyt_to_extra.value
+        * Ca_C_0.value
+        * (Km_Ca_extra_to_cyt.value + Ca_extra_0.value)
+        / ((Km_Ca_cyt_to_extra.value + Ca_C_0.value) * Ca_extra_0.value),
+    )  # 10 * units.microM_to_molec_per_pL * Vcyto.value)
     # Some 'private' observables to monitor the ER and cytoslic calcium for
     # Michaelis-Menten rate.
     Observable("_Ca_extra", Ca(b=None) ** EXTRACELLULAR)
@@ -656,8 +664,15 @@ def calcium_cytosol_er_flux_mk():
     alias_model_components()
     Parameter("Vmax_Ca_cyt_to_er", 20 * units.microM_to_molec_per_pL * Vcyto.value)
     Parameter("Km_Ca_cyt_to_er", 0.65 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("Vmax_Ca_er_to_cyt", 26 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("Km_Ca_er_to_cyt", 5000 * units.microM_to_molec_per_pL * Ver.value)
+    Parameter("Km_Ca_er_to_cyt", 1000 * units.microM_to_molec_per_pL * Ver.value)
+    alias_model_components()
+    Parameter(
+        "Vmax_Ca_er_to_cyt",
+        Vmax_Ca_cyt_to_er.value
+        * Ca_C_0.value
+        * (Km_Ca_er_to_cyt.value + Ca_E_0.value)
+        / ((Km_Ca_cyt_to_er.value + Ca_C_0.value) * Ca_E_0.value),
+    )
     Observable("__Ca_er", Ca(b=None) ** ER_LUMEN)
     Observable("__Ca_cyt", Ca(b=None) ** CYTOSOL)
     alias_model_components()
@@ -851,7 +866,7 @@ def cytosolic_calcium_inhibits_ip3r():
     # mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
     K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcyto.value * 1e-12)
     Parameter("kf_cytCa_bind_IP3R", K_CA_BIND)
-    Parameter("Kd_cytCa_bind_IP3R", 3.0 * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("Kd_cytCa_bind_IP3R", 10.0 * units.microM_to_molec_per_pL * Vcyto.value)
     alias_model_components()
     Expression("kr_cytCa_bind_IP3R", kf_cytCa_bind_IP3R * Kd_cytCa_bind_IP3R / V_C)
     alias_model_components()
@@ -983,6 +998,31 @@ def gaq_activated_calcium_signaling_without_influx_extrusion():
     ip3r_transports_er_calcium_to_cytosol()
     cytosolic_calcium_buffering()
     cytosolic_calcium_feedback()
+    ip3_degradation()
+    return
+
+
+def gaq_activated_calcium_signaling_minimal():
+    """Combines mechanistic elements to define a minimalistic version of the calcium signaling pathway.
+
+    This simplified version of the calcium pathway does not include calcium
+    buffering, cytosolic calcium feedback mechanisms, or pump reactions to
+    maintain calcium homeostasis.
+
+    Calls:
+        * calcium_signal_monomers
+        * calcium_signal_initials
+        * plc_binds_gaq_and_catalyzes_pip2_to_ip3
+        * ip3_binds_ip3r
+        * ip3r_transports_er_calcium_to_cytosol
+        * ip3_degradation
+
+    """
+    calcium_signal_monomers()
+    calcium_signal_initials()
+    plc_binds_gaq_and_catalyzes_pip2_to_ip3()
+    ip3_binds_ip3r()
+    ip3r_transports_er_calcium_to_cytosol()
     ip3_degradation()
     return
 
