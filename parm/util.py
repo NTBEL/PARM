@@ -3,6 +3,17 @@ from pysb.simulator import ScipyOdeSimulator
 from itertools import compress
 
 
+def expand_times(times, expand_by=100):
+    tsp = np.linspace(0, times.max(), expand_by)
+    tsp = np.concatenate((tsp, times[1:-1]))
+    tsp.sort()
+    findex = list()
+    for time in times:
+        idx = np.where(tsp == time)[0][0]
+        findex.append(idx)
+    return tsp, findex
+
+
 def run_model(model, tspan, param_values):
     solver = ScipyOdeSimulator(model, tspan=tspan, integrator="lsoda")
     m_run = solver.run()
