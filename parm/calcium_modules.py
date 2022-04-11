@@ -596,7 +596,7 @@ def calcium_extrusion_and_influx_mk():
     Parameter("Vmax_Ca_cyt_to_extra", 10000 * units.nM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 1 uM.
     Parameter("Km_Ca_cyt_to_extra", 0.15 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("n_Ca_cyt_to_extra", 2)
+    Parameter("n_Ca_cyt_to_extra", 1)
     # extracellular space to cytosol
     # Nominal value of 10 mM.
     Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
@@ -726,8 +726,8 @@ def regulation_of_cytosolic_calcium_concentration():
     """
 
     cytosolic_calcium_buffering()
-    calcium_extrusion_and_influx_mk()
-    calcium_cytosol_er_flux_mk()
+    calcium_extrusion_and_influx()
+    calcium_cytosol_er_flux()
     return
 
 
