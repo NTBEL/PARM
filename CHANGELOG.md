@@ -1,11 +1,18 @@
 ## [branch: reorganize_modularize] - 2022-03-04
 
-### Added
+
 
 ### Changed
+* Major reorganization of the model code into modular functions (PySB modules) and definition of models using modular functions.
+* Reduced the models down to a single core parm.py model (i.e., the main model) and any encoded variations of the model are now defined in the `variants` module.
+* antogonist models (in `parm.antagonist`) were updated to reflect changes in the core model and to also use the modular design.
 
-### Fixed
-  * 
+### Added
+* Module functions for additional mechanistic elements including calcium feedback in the cytosol (IP3R inhibition, PLC enhancement), calcium buffering, and additional reactions to control calcium homeostasis. These mechanistic elements were added to the core parm model.
+* With restructuring of model the following new modules were created: `comparments`, `receptor_modules`, `gprotein_modules`, `calcium_modules`, `defaults`, `units`, and `parm`. Additionally, in `parm.antagonist` the new `antagonist_modules` module was added.
+* Addition of the `util` module with functions for running the model, pre-equlibration, and expanding the time points in a previously generated (or experimental) time series.
+
+
 
 
 ## [branch: new_reactions] - 2022-02-17
