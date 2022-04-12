@@ -596,7 +596,7 @@ def calcium_extrusion_and_influx_mk():
     Parameter("Vmax_Ca_cyt_to_extra", 10000 * units.nM_to_molec_per_pL * Vcyto.value)
     # Nominal value of 1 uM.
     Parameter("Km_Ca_cyt_to_extra", 0.15 * units.microM_to_molec_per_pL * Vcyto.value)
-    Parameter("n_Ca_cyt_to_extra", 1)
+    # Parameter("n_Ca_cyt_to_extra", 2)
     # extracellular space to cytosol
     # Nominal value of 10 mM.
     Parameter("Km_Ca_extra_to_cyt", 10000 * units.microM_to_molec_per_pL * Ver.value)
@@ -605,15 +605,9 @@ def calcium_extrusion_and_influx_mk():
     Parameter(
         "Vmax_Ca_extra_to_cyt",
         Vmax_Ca_cyt_to_extra.value
-        * Ca_C_0.value ** n_Ca_cyt_to_extra.value
+        * Ca_C_0.value
         * (Km_Ca_extra_to_cyt.value + Ca_extra_0.value)
-        / (
-            (
-                Km_Ca_cyt_to_extra.value ** n_Ca_cyt_to_extra.value
-                + Ca_C_0.value ** n_Ca_cyt_to_extra.value
-            )
-            * Ca_extra_0.value
-        ),
+        / ((Km_Ca_cyt_to_extra.value + Ca_C_0.value) * Ca_extra_0.value),
     )  # 10 * units.microM_to_molec_per_pL * Vcyto.value)
     # Some 'private' observables to monitor the ER and cytoslic calcium for
     # Michaelis-Menten rate.
@@ -623,8 +617,7 @@ def calcium_extrusion_and_influx_mk():
     # First order rate constants based on MK rate.
     Expression(
         "k_Ca_cyt_to_extra",
-        (Vmax_Ca_cyt_to_extra * _Ca_cyt ** (n_Ca_cyt_to_extra - 1))
-        / (_Ca_cyt ** n_Ca_cyt_to_extra + Km_Ca_cyt_to_extra ** n_Ca_cyt_to_extra),
+        (Vmax_Ca_cyt_to_extra) / (_Ca_cyt + Km_Ca_cyt_to_extra),
     )  # 1/s
     Expression(
         "k_Ca_extra_to_cyt", Vmax_Ca_extra_to_cyt / (_Ca_extra + Km_Ca_extra_to_cyt)
@@ -673,6 +666,7 @@ def calcium_cytosol_er_flux_mk():
     alias_model_components()
     Parameter("Vmax_Ca_cyt_to_er", 20 * units.microM_to_molec_per_pL * Vcyto.value)
     Parameter("Km_Ca_cyt_to_er", 0.65 * units.microM_to_molec_per_pL * Vcyto.value)
+    # Parameter("n_Ca_cyt_to_er", 2)
     Parameter("Km_Ca_er_to_cyt", 1000 * units.microM_to_molec_per_pL * Ver.value)
     alias_model_components()
     Parameter(
