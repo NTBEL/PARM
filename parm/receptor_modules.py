@@ -75,6 +75,27 @@ def receptor_agonist_monomers():
     return
 
 
+def receptor_monomer_only():
+    """Declares the monomer PAR2.
+    Adds one monomers and 1 annotation.
+
+    Monomers:
+        * PAR2 - the receptor.
+    """
+    # PAR2:
+    #  binding site:
+    #    bortho = orthosteric 2AT binding site
+    #    ballo = allosteric binding site
+    #    bgaq = G protein binding site
+    #  states: I = inactive, A = active, D = denatured
+    Monomer("PAR2", ["bortho", "ballo", "bgaq", "state"], {"state": ["I", "A", "D"]})
+    alias_model_components()
+    # Annotations
+    # ===========
+    Annotation(PAR2, "https://identifiers.org/uniprot:P55085")
+    return
+
+
 def agonist_initial():
     """Declares the initial condition for 2AT (TAT).
 
@@ -96,8 +117,8 @@ def agonist_initial():
     return
 
 
-def total_receptor_initials():
-    """Declares parameters defining the total and denatured amounts of PAR2.
+def receptor_initials():
+    """Declares initial conditions for different PAR2 states.
     Adds 2 parameters and 1 expression.
 
     Parameters:
@@ -105,7 +126,8 @@ def total_receptor_initials():
         * f_denature - fraction of PAR2 denatured by photoinactivation.
 
     Expressions:
-        PAR2_0_D - concentration of PAR2 that is denatured through photoinactivation.
+        * PAR2_0_D - amount of PAR2 that has been denatured through photoinactivation.
+        * PAR2_0_I -  amount of initial inactive PAR2.
     """
     # total PAR2
     # From Falkenburger et al. 2010 https://dx.doi.org/10.1085%2Fjgp.200910344
@@ -115,11 +137,16 @@ def total_receptor_initials():
     # From Brinkerhoff, Choi, and Linderman 2008 https://doi.org/10.1016/j.jtbi.2008.01.002
     #    Receptor concentration 2e3 to 2e4 /cell
     # Our current estimate of PAR2/HEK293-cell from the AuNP/cell binding
-    # saturation curve is ~150.
-    Parameter("PAR2_0", 150)
+    # saturation curve is ~160.
+    Parameter("PAR2_0", 160)
     Parameter("f_denature", 0.0)  # By default no PAR2 has been denatured.
     alias_model_components()
     Expression("PAR2_0_D", f_denature * PAR2_0)
+    alias_model_components()
+    Expression("PAR2_0_I", Max(PAR2_0 - PAR2_0_D, 0))
+    alias_model_components()
+    Initial(PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
+    Initial(PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
     return
 
 
@@ -132,7 +159,7 @@ def minimal_two_state_par2_activation():
     Calls functions:
         * receptor_agonist_monomers
         * agonist_initial
-        * total_receptor_initials
+        * receptor_initials
 
     Declares initial conditions for PAR2 in state I and state D.
 
@@ -151,13 +178,9 @@ def minimal_two_state_par2_activation():
 
     receptor_agonist_monomers()
     agonist_initial()
-    total_receptor_initials()
+    receptor_initials()
     # Needed to recognize the monomer and parameter names in the present scope
     alias_model_components()
-    Expression("PAR2_0_I", Max(PAR2_0 - f_denature * PAR2_0, 0))
-    alias_model_components()
-    Initial(PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
-    Initial(PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
     # Binding forward rate constant for ligand-receptor binding in the yeast
     # G-protein cycle model of  Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
     # is 2x10^6 1/(M*s). Converting for our model that would be:
@@ -216,7 +239,7 @@ def single_state_par2_activation():
     Calls functions:
         * receptor_agonist_monomers
         * agonist_initial
-        * total_receptor_initials
+        * receptor_initials
 
     Declares initial conditions for PAR2 in state I and state D.
 
@@ -232,12 +255,8 @@ def single_state_par2_activation():
     """
     receptor_agonist_monomers()
     agonist_initial()
-    total_receptor_initials()
+    receptor_initials()
     alias_model_components()
-    Expression("PAR2_0_I", Max(PAR2_0 - f_denature * PAR2_0, 0))
-    alias_model_components()
-    Initial(PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_I)
-    Initial(PAR2(state="D", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, PAR2_0_D)
     # Binding forward rate constant for ligand-receptor binding in the yeast
     # G-protein cycle model of  Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
     # is 2x10^6 1/(M*s). Converting for our model that would be:
@@ -456,6 +475,30 @@ def unoccupied_active_par2_degradation():
     return
 
 
+def inactive_par2_degradation():
+    """Defines degradation of free inactive PAR2.
+    1st order PAR2 degradation:
+        PAR2_I ---> None
+
+    Adds 1 parameter.
+
+    Parameters:
+        * k_PAR2_I_degradation - rate constant for 1st order degradation of
+            free inactive PAR2.
+    """
+    # Free unbound and inactive PAR2:
+    # rate constant for receptor degradation from
+    # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
+    # used in yeast G-protein cycle model is: 4x10^-4 1/s
+    Parameter("k_PAR2_I_degradation", 4e-4)
+    alias_model_components()
+    degrade(
+        PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
+        k_PAR2_I_degradation,
+    )
+    return
+
+
 def par2_synthesis():
     """Defines synthesis of PAR2.
     Zero order synthesis of PAR2:
@@ -466,16 +509,20 @@ def par2_synthesis():
     Parameters:
         * k_PAR2_synthesis - rate constant for zero-order synthesis of PAR2.
     """
+    alias_model_components()
     # Zero-order synthesis of PAR2.
     # The rate constant for receptor synthesis from
     # Yi et al. 2003 PNAS https://doi.org/10.1073/pnas.1834247100
     # used in yeast G-protein cycle model is: 4 molecules/s
-    Parameter("k_PAR2_synthesis", 4)
+    # Rate gets multiplied by the compartment size so we divide by the
+    # fractional volume of the cell membrane to keep right value in molecules/cell*s.
+    Parameter("k_PAR2_synthesis", 4 / V_CM.get_value())
     alias_model_components()
     synthesize(
         PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB,
         k_PAR2_synthesis,
     )
+    # Rule("synthesize_PAR2", None >> PAR2(state="I", bortho=None, ballo=None, bgaq=None) ** CELL_MEMB, k_PAR2_synthesis)
     return
 
 
@@ -590,13 +637,18 @@ def observables():
     Observable("aPAR2", PAR2(state="A"))
     # Denatured PAR2
     Observable("dPAR2", PAR2(state="D"))
+    Observable("allPAR2", PAR2())
     alias_model_components()
     # Ro
     Expression("totPAR2", iPAR2 + aPAR2)
-    tat_PAR2 = (
-        TAT(b=1) ** EXTRACELLULAR % PAR2(bortho=1, ballo=WILD, bgaq=WILD) ** CELL_MEMB
-    )
-    Observable("occupied_PAR2", tat_PAR2)
+    try:
+        tat_PAR2 = (
+            TAT(b=1) ** EXTRACELLULAR
+            % PAR2(bortho=1, ballo=WILD, bgaq=WILD) ** CELL_MEMB
+        )
+        Observable("occupied_PAR2", tat_PAR2)
+        Expression("par2_occupancy", occupied_PAR2 / totPAR2)
+    except:
+        pass
     alias_model_components()
     Expression("par2_active_ratio", aPAR2 / totPAR2)
-    Expression("par2_occupancy", occupied_PAR2 / totPAR2)
