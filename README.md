@@ -15,6 +15,7 @@ The core model of PARM is defined in `parm.parm`.
   * `parm.antagonist.noncompetitive` - Adds a noncompetitive antagonist which operates via negative allosteric modulation of the agonist binding affinity. (Note: The factor
     which controls the allosteric modulation could also be set such that the antagonist induces positive allosteric modulation, increasing agonist binding affinity.)
 
-There are also two models with mechanistic variations defined in `parm.variants`:
+There are also 3 models with mechanistic variations defined in `parm.variants`:
   * `parm.variants.precoupled` - Adds pre-coupling between PAR2 and the G-protein heterotrimer such that some PAR2 can bind to the heterotrimer under resting conditions (without any agonist).
   * `parm.variants.heterogprot_cycle` - The receptor binding and G-protein interaction mechanism is adapted from the yeast G-protein cycle model of [Yi et al. 2003](https://doi.org/10.1073/pnas.1834247100).
+  * `parm.variants.par2_synthesis_degradation` - This model only contains PAR2 with reactions for its resting synthesis and degradation. 
