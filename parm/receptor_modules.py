@@ -641,12 +641,14 @@ def observables():
     alias_model_components()
     # Ro
     Expression("totPAR2", iPAR2 + aPAR2)
+    alias_model_components()
     try:
         tat_PAR2 = (
             TAT(b=1) ** EXTRACELLULAR
             % PAR2(bortho=1, ballo=WILD, bgaq=WILD) ** CELL_MEMB
         )
         Observable("occupied_PAR2", tat_PAR2)
+        alias_model_components()
         Expression("par2_occupancy", occupied_PAR2 / totPAR2)
     except:
         pass
