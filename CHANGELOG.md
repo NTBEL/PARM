@@ -1,6 +1,17 @@
+## [branch: setup-script-and-run-function] - 2022-10-25
+
+### Changed
+* Updated the `parm.util.run_model` function to accept an option `param_values` input for parameter vectors to be passed on to the `ScipyOdeSimulator`. Also added type hints and a docstring to the the function.
+
+### Added
+* A `setup.py` setuptools install script.
+* An `environment.yml` conda environment file that includes pysb and cython.
+
+### Fixed
+* A variable misspelling error in the `parm.util.run_model` function for the return variable `yout`.
+
+
 ## [branch: reorganize_modularize] - 2022-03-04
-
-
 
 ### Changed
 * Major reorganization of the model code into modular functions (PySB modules) and definition of models using modular functions.
@@ -11,8 +22,6 @@
 * Module functions for additional mechanistic elements including calcium feedback in the cytosol (IP3R inhibition, PLC enhancement), calcium buffering, and additional reactions to control calcium homeostasis. These mechanistic elements were added to the core parm model.
 * With restructuring of model the following new modules were created: `comparments`, `receptor_modules`, `gprotein_modules`, `calcium_modules`, `defaults`, `units`, and `parm`. Additionally, in `parm.antagonist` the new `antagonist_modules` module was added.
 * Addition of the `util` module with functions for running the model, pre-equlibration, and expanding the time points in a previously generated (or experimental) time series.
-
-
 
 
 ## [branch: new_reactions] - 2022-02-17
