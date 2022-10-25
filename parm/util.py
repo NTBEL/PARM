@@ -1,6 +1,8 @@
 import numpy as np
+import pysb
 from pysb.simulator import ScipyOdeSimulator
 from itertools import compress
+import typing
 
 
 def expand_times(times, expand_by=100):
@@ -14,11 +16,34 @@ def expand_times(times, expand_by=100):
     return tsp, findex
 
 
-def run_model(model, tspan, param_values):
-    solver = ScipyOdeSimulator(model, tspan=tspan, integrator="lsoda")
+def run_model(
+    model: pysb.Model,
+    tspan: np.ndarray,
+    param_values: typing.Union[None, np.ndarray, list] = None,
+) -> np.ndarray:
+    """Run the given model using ScipyOdeSimulator.
+
+    This is a wrapper function that simulates the model using the ScipyOdeSimulator
+    with the lsoda integrator and returns the corresponding model trajectory.
+
+    Args:
+        model: The input PySB model to simulate.
+        tspan: The time span to simulate the model over.
+        param_values: Optional parameter vector to use when simulating the
+            model. If None, the nominal/default model parameters will be
+            used. The input can also be a list of parameter vectors, each of
+            which will be simulated.
+
+    Returns:
+        The PySB model simulation trajectory as a structured NumPy array.
+    """
+
+    solver = ScipyOdeSimulator(
+        model, tspan=tspan, param_values=param_values, integrator="lsoda"
+    )
     m_run = solver.run()
     yout = m_run.all
-    return yuot
+    return yout
 
 
 # Adapted from: https://github.com/LoLab-VU/JARM/blob/master/model_analysis/equilibration_function.py
