@@ -3,6 +3,7 @@ import pysb
 from pysb.simulator import ScipyOdeSimulator
 from itertools import compress
 import typing
+from parm import parameter_masks, default_param_values
 
 
 def expand_times(times, expand_by=100):
@@ -19,7 +20,8 @@ def expand_times(times, expand_by=100):
 def run_model(
     model: pysb.Model,
     tspan: np.ndarray,
-    param_values: typing.Union[None, np.ndarray, list] = None,
+    param_values: typing.Union[None, np.ndarray, typing.List[np.ndarray]] = None,
+    initials: typing.Union[None, np.ndarray, typing.List[np.ndarray]] = None,
 ) -> np.ndarray:
     """Run the given model using ScipyOdeSimulator.
 
@@ -29,17 +31,25 @@ def run_model(
     Args:
         model: The input PySB model to simulate.
         tspan: The time span to simulate the model over.
-        param_values: Optional parameter vector to use when simulating the
-            model. If None, the nominal/default model parameters will be
-            used. The input can also be a list of parameter vectors, each of
-            which will be simulated.
+        param_values: Optional specification of parameters to use when
+            simulating the model. If None, the nominal/default model parameters
+            will be used. The input can be None, a single parameter vector, or
+            a list of parameter vectors that will each be simulated.
+        initials: Optional specification of initial concentrations to use when
+            simulating the model. If None, the nominal/default model values
+            will be used. The input can be None, a single vector, or
+            a list of vectors that will each be simulated.
 
     Returns:
         The PySB model simulation trajectory as a structured NumPy array.
     """
 
     solver = ScipyOdeSimulator(
-        model, tspan=tspan, param_values=param_values, integrator="lsoda"
+        model,
+        tspan=tspan,
+        param_values=param_values,
+        initials=initials,
+        integrator="lsoda",
     )
     m_run = solver.run()
     yout = m_run.all
@@ -47,7 +57,7 @@ def run_model(
 
 
 # Adapted from: https://github.com/LoLab-VU/JARM/blob/master/model_analysis/equilibration_function.py
-def pre_equilibration(model, time_search, parameters=None, tolerance=1e-6):
+def _pre_equilibration(model, time_search, parameters=None, tolerance=1e-6):
     """
     Parameters
     ----------
@@ -124,3 +134,57 @@ def pre_equilibration(model, time_search, parameters=None, tolerance=1e-6):
         ]
         erCa_eq = [obs["erCa"][time_to_equilibration[1]] for obs in solver.observables]
     return all_times_eq, all_conc_eq, cytoCa_eq, erCa_eq
+
+
+def pre_equilibrate(
+    model: pysb.Model,
+    time_search: np.ndarray,
+    param_values: typing.Optional[np.ndarray] = None,
+    tolerance: float = 10.0,
+) -> typing.Tuple[np.ndarray, np.ndarray]:
+
+    # Get a vector of the parameter values.
+    if param_values is None:
+        param_values = np.copy(default_param_values)
+    # Make a mask for the initial concentration of the agonist, 2AT, and set
+    # it to zero.
+    two_at_mask = parameter_masks["TAT_0"]
+    two_at_initial = param_values[two_at_mask]
+    param_values[two_at_mask] = 0
+    t_eq, conc_eq, cytoCa_eq, erCa_eq = _pre_equilibration(
+        model, time_search, parameters=param_values, tolerance=tolerance
+    )
+
+    # Mask for the resting cytosolic Ca2+ amount for the FRET estimation.
+    cacrest_mask = parameter_masks["Ca_C_resting"]
+    # Adjust the FRET parameter affected by the initial cytosol calcium concentration.
+    param_values[cacrest_mask] = cytoCa_eq[0]
+    # Reset the intial 2AT concentration.
+    param_values[two_at_mask] = two_at_initial
+    initials = conc_eq[0]
+
+    return param_values, initials
+
+
+def calcium_homeostasis_reverse_rate_coupling(model, param_values):
+    # Masks for the calcium homeostasis reaction rate constants -- use for coupling
+    # the forward and reverse rates in the loglikelihood function.
+    kcaex2cyt_mask = parameter_masks["k_Ca_extra_to_cyt"]
+    kcacyt2ex_mask = parameter_masks["k_Ca_cyt_to_extra"]
+    kcacyt2er_mask = parameter_masks["k_Ca_cyt_to_er"]
+    kcaer2cyt_mask = parameter_masks["k_Ca_er_to_cyt"]
+    # Masks for the initial calcium amounts in different compartments.
+    cac0_mask = parameter_masks["Ca_C_0"]
+    caex0_mask = parameter_masks["Ca_extra_0"]
+    caer0_mask = parameter_masks["Ca_E_0"]
+    # Get the initial amounts of calcium.
+    cac0 = param_values[cac0_mask]
+    caex0 = param_values[caex0_mask]
+    caer0 = param_values[caer0_mask]
+    # Now couple the reverse rate constant to the forward for
+    # calcium homeostasis reactions.
+    kcacyt2ex = param_values[kcacyt2ex_mask]
+    kcacyt2er = param_values[kcacyt2er_mask]
+    param_values[kcaex2cyt_mask] = kcacyt2ex * cac0 / caex0
+    param_values[kcaer2cyt_mask] = kcacyt2er * cac0 / caer0
+    return param_values
