@@ -1,23 +1,19 @@
 import numpy as np
-from pysb.simulator import ScipyOdeSimulator
 import matplotlib.pyplot as plt
-from parm.parm import model
-from parm import units
+
+from parm import model, default_param_values
+from parm import util
 
 tspan = np.linspace(0, 300, num=600, endpoint=True)
-solver = ScipyOdeSimulator(model, tspan=tspan, integrator="lsoda")
-param_values = np.array([parm.value for parm in model.parameters])
-# Mask for initial concentration of 2AT
-twoat_mask = [parm.name == "TAT_0" for parm in model.parameters]
-param_values[twoat_mask] = (
-    316 * units.nM_to_molec_per_pL * model.parameters["Vextra"].value
-)
+
+# Input the inital 2AT concentration as 316.0 nM.
+param_values = util.set_tat_initial_nM(default_param_values, 316.0)
+
 print("running PARM...")
-m_run = solver.run(param_values=param_values)
-yout = m_run.all
+traj_out = util.run_model(model, tspan, param_values=param_values)
 print("Done running...")
 
-plt.plot(tspan, yout["FRET"], label="FRET")
+plt.plot(tspan, traj_out["FRET"], label="FRET")
 plt.ylabel("FRET Ratio")
 plt.xlabel("Time (s)")
 plt.show()
