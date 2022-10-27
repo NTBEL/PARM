@@ -4,6 +4,7 @@ from pysb.simulator import ScipyOdeSimulator
 from itertools import compress
 import typing
 from parm import parameter_masks, default_param_values
+from parm import units
 
 
 def expand_times(times, expand_by=100):
@@ -166,7 +167,11 @@ def pre_equilibrate(
     return param_values, initials
 
 
-def calcium_homeostasis_reverse_rate_coupling(model, param_values):
+def calcium_homeostasis_reverse_rate_coupling(
+    param_values: np.array,
+) -> np.array:
+    """Adjust parameters to couple reverse rates of calcium homeostasis to the forward rates."""
+
     # Masks for the calcium homeostasis reaction rate constants -- use for coupling
     # the forward and reverse rates in the loglikelihood function.
     kcaex2cyt_mask = parameter_masks["k_Ca_extra_to_cyt"]
@@ -187,4 +192,28 @@ def calcium_homeostasis_reverse_rate_coupling(model, param_values):
     kcacyt2er = param_values[kcacyt2er_mask]
     param_values[kcaex2cyt_mask] = kcacyt2ex * cac0 / caex0
     param_values[kcaer2cyt_mask] = kcacyt2er * cac0 / caer0
+    return param_values
+
+
+def get_parameter_vector(
+    model: pysb.Model,
+) -> np.array:
+    """Returns a parameter value vector corresponding to a PySB model's parameters."""
+    return np.array([param.value for param in model.parameters])
+
+
+def get_parameter_mask(
+    model: pysb.Model,
+    param_name: str,
+) -> typing.List[bool]:
+    """Returns a boolean mask of the parameter value vector for given PySB model and parameter name."""
+    return [par.name == param_name for par in model.parameters]
+
+
+def set_tat_initial_nM(param_values, tat_conc_nM):
+    # Mask for initial concentration of 2AT
+    twoat_mask = parameter_masks["TAT_0"]
+    vextra_mask = parameter_masks["Vextra"]
+    v_extra = param_values[vextra_mask]
+    param_values[twoat_mask] = tat_conc_nM * units.nM_to_molec_per_pL * v_extra
     return param_values
