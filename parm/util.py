@@ -210,7 +210,12 @@ def get_parameter_mask(
     return [par.name == param_name for par in model.parameters]
 
 
-def set_tat_initial_nM(param_values, tat_conc_nM):
+def set_tat_initial_nM(
+    param_values: np.array,
+    tat_conc_nM: float,
+) -> np.array:
+    """Returns an updated parameter vector with the desired 2AT initial concentration."""
+
     # Mask for initial concentration of 2AT
     twoat_mask = parameter_masks["TAT_0"]
     vextra_mask = parameter_masks["Vextra"]
