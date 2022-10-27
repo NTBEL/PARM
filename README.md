@@ -20,11 +20,11 @@ PARM contains rules-based models of PAR2 (proteinase-activated receptor isoform 
     2. [pip install](#pip-install)
     3. [Manual install](#manual-install)
     4. [Recommended additional software](#recommended-additional-software)
-  2. [License](#license)
-  3. [Change Log](#change-log)
-  4. [Documentation and Usage](#documentation-and-usage)
+  2. [Documentation and Usage](#documentation-and-usage)
     1. [Models in PARM](#models-in-parm)
-    2. [Quick Overview](#quick-overview)
+    2. [Example usage](#example-usage)    
+  3. [License](#license)
+  4. [Change Log](#change-log)
   5. [Contact](#contact)
   6. [Citing](#citing)  
 
@@ -35,15 +35,18 @@ PARM contains rules-based models of PAR2 (proteinase-activated receptor isoform 
 **PARM** installs as the `parm` Python package. It is tested with Python 3.8.
 
 ### Dependencies
+
 Note that `parm` has the following core dependency:
    * [PySB](https://pysb.org/) >= 1.13.2
 
 ### pip install
+
 First, install [PySB](https://pysb.org/download).
 
 You can then install `parm` version 0.1.0 with `pip` sourced from the GitHub repo:
 
 ##### with git installed:
+
 Fresh install:
 ```
 pip install git+https://github.com/NTBEL/PARM@v0.1.0
@@ -52,7 +55,9 @@ Or to upgrade from an older version:
 ```
 pip install --upgrade git+https://github.com/NTBEL/PARM@v0.1.0
 ```
+
 ##### without git installed:
+
 Fresh install:
 ```
 pip install https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.1.0.zip
@@ -61,7 +66,9 @@ Or to upgrade from an older version:
 ```
 pip install --upgrade https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.1.0.zip
 ```
+
 ### Manual install
+
 First, install [PySB](https://pysb.org/download).
 Then, download the repository and from the `PARM` folder/directory run
 ```
@@ -73,6 +80,7 @@ pip install .
 The following software is not required for the basic operation of **parm**, but provide extra capabilities and features when installed.
 
 #### Cython
+
 [Cython](https://cython.org/) is used by PySB to compile the ODE reactions on-the-fly, which can greatly improve model performance when running with the `ScipyOdeSimulator`.
 
 pip:
@@ -85,22 +93,11 @@ conda install cython
 ```
 ------    
 
-# License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
-
-------
-
-# Change Log
-
-See: [CHANGELOG](CHANGELOG.md)
-
-------
-
 # Documentation and Usage
 
 ## Models in PARM
-The core model of PARM is defined in `parm.parm`.
+
+The core model of PARM is defined in `parm.parm` and can be imported at the package level like `from parm import model`.
 
  Additionally, PARM contains 2 extensions of the `parm.parm` model which incorporate an antagonist:
 
@@ -116,7 +113,7 @@ There are also 3 models with mechanistic variations defined in `parm.variants`:
 ### Example usage
 
 ```
-from parm.parm import model
+from parm import model
 from parm.util import run_model
 
 tspan = list(range(0, 10, 1))
@@ -124,46 +121,41 @@ tspan = list(range(0, 10, 1))
 traj_out = run_model(model, tspan)
 ```
 
-### Note on pre-equlibration
-The main parm model includes some calcium homeostasis reactions that may require pre-eqilibration before running the actual simulation. This affects the calcium concentrations in different compartments and can affect the estimate of the FRET ratio. The model can pre-equilibrated using the `parm.util.pre_equilibration` function. Here is an example:
+#### Note on pre-equlibration
+
+The main parm model includes some calcium homeostasis reactions that may require pre-eqilibration before running the actual simulation. This affects the calcium concentrations in different compartments and can affect the estimate of the FRET ratio. The model can pre-equilibrated using the `parm.util.pre_equilibrate` function. Here is an example:
 
 ```
-from parm.parm import model
-from parm.util import pre_equilibrate
+from parm import model
+from parm import util
 import numpy as np
 from pysb.simulator import ScipyOdeSimulator
 
 # set the time span for pre-eqilibration.
 tspan_pre = list(range(0, 3000, 1))
-# Get a vector of the parameter values.
-param_values = np.array([param.value for param in model.parameters])
-# Make a mask for the initial concentration of the agonist, 2AT, and set
-# it to zero.
-two_at_mask = np.array([param.name='TAT_0' for param in model.parameters])
-two_at_initial = param_values[two_at_mask]
-param_values[two_at_mask] = 0
 # Run the pre-equlibration.
-t_eq, conc_eq, cytoCa_eq, erCa_eq = pre_equilibration(model,
-                                                      tspan_pre,
-                                                      parameters=param_values,
-                                                      tolerance=100)
-
-# Mask for the resting cytosolic Ca2+ amount for the FRET estimation.
-cacrest_mask = [param.name=='Ca_C_resting' for param in model.parameters]
-# Adjust the FRET parameter affected by the initial cytosol calcium concentration.
-param_values[cacrest_mask] = cytoCa_eq[0]
-
-# Reset the intial 2AT concentration.
-param_values[two_at_mask] = two_at_initial
+param_values_eq, initials_eq = util.pre_equilibrate(model, tspan_pre)
 
 # set the time span for the simulation.
 tspan = list(range(0, 300, 1))                                                      
 # Setup the PySB solver/simulator.
 solver = ScipyOdeSimulator(model, tspan=tspan, integrator='lsoda')
 # Run the simulation.
-sim = solver.run(param_values=param_values, initials=conc_eq[0])
+sim = solver.run(param_values=param_values_eq, initials=initial_eq)
 
 ```
+
+------
+
+# License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details
+
+------
+
+# Change Log
+
+See: [CHANGELOG](CHANGELOG.md)
 
 ------
 
@@ -177,5 +169,6 @@ If you need assistance with PySB-specific issues then you can also try the pysb 
 ------
 
 # Citing
+
 If this model or other package features are useful in your research and you wish to cite it, you can use the following software citation:
-> B. A. Wilson, “PARM: PAR2 Activation and calcium signaling Reaction Model in PySB” (v0.1.0), https://github.com/NTBEL/PARM, 2022.
+> B. A. Wilson, “PARM: PAR2 Activation and calcium signaling Reaction Model” (v0.1.0), https://github.com/NTBEL/PARM, 2022.
