@@ -4,7 +4,7 @@ import numpy as np
 from .parm import model
 
 # Make a vector of the default model parameters.
-default_param_values = [param.value for param in model.parameters]
+default_param_values = np.array([param.value for param in model.parameters])
 
 # Create a dictionary of pamameter masks for fancy boolean indexing of the
 # the parameter vector.
