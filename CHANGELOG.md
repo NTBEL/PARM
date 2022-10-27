@@ -1,3 +1,26 @@
+## v0.1.0 - 2022-10-27
+
+### Changed
+* Starting semantic versioning of the model code at v0.1.0.
+* Made the `parm.util.pre_equilibration` function private by renaming to `parm.util._pre_equilibration`.
+* The main PARM model `parm.parm` is now imported in the package `__init__.py` so that it can be imported like `from parm import model`.
+* Moved the pysb dependency in setup.py to the `install_requires` list.
+
+### Added
+* Additional sections (Install, License, etc.) and information in the README, as well as shields/badges towards the top of the README.
+* New wrapper function for pre-equilibration in the `util` module, `parm.util.pre_equilibrate` that calls the `_pre_equilibration` function but also does addtional steps to automate the process of setting 2AT to zero concentration and adjusting the baseline cytosolic calcium concentration used for the FRET ratio. This function also has a simpler output that contains an updated parameter vector and the initial concentrations that can be directly passed to the `run_model` function.
+* New utility function `parm.util.calcium_homeostasis_reverse_rate_coupling` that adjusts a parameter vector to account for coupling of the reverse rates of the calcium homeostasis reactions to the forward rates. This function can be used adjust the parameters when sampling values of the reverse rate parameters for those reactions: for example, during model training.
+* New default parameter vector, `default_param_values` created in the package `__init__.py` for the main `parm.parm` model which can be imported like `from parm import default_param_values`.
+* New dictionary of parameter vector masks for fancy indexing, `parameter_masks`, created for the main `parm.parm` model which can imported like `from parm import parameter_masks`.
+* Utility function `parm.util.get_parameter_vector` that takes a PySB model and returns a vector of the parameter values.
+* Utiltiy function `parm.util.get_parameter_mask` that takes a PySB model and parameter name and returns a boolean mask to fancy index the corresponding paramter value vector for that particular parameter.
+* Utility function `parm.util.set_tat_initial_nM` that takes a parameter value vector and an initial concentration of 2AT in nM and updates the parameter vector with the desired 2AT concentration.
+
+### Fixed
+* Converted the `extras_require` argument in the setup.py to be dictionary instead of a list, now with just the optional Cython dependency. Note that the pysb dependency was moved into the `install_requires` list.
+* Commented out the `long_description` in setup.py because it was causing error when trying to read the README file.  
+
+
 ## [branch: setup-script-and-run-function] - 2022-10-25
 
 ### Changed
