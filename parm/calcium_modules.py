@@ -705,6 +705,106 @@ def calcium_cytosol_er_flux_mk():
     )
     return
 
+def calcium_extrusion_and_influx_single():
+    """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
+
+    This function defines two first order reactions to control extrusion of Ca2+
+    from the cytosol to the extracellular space and its influx from the
+    extracellular space into the cytosol. This is based on the decay in the Ca2+
+    FRET signal seen in Figure S3C of Kang et al. 2019
+    (https://doi.org/10.1021/acsnano.9b01993) which we assume is primarily due
+    to first-order excretion/extrusion of excess Ca2+ from the released ER store
+    into the extracellular space by cell membrane ion channels. We assume that
+    at steady-state in the abscence of agonist the extrusion and influx are
+    balanced to maintain the resting cyctosolic concentration of free Ca2+.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+_EXTRA
+        2. Ca2+_EXTRA ---> Ca2+_CYTO
+
+    Adds 2 parameters.
+
+    Parameters:
+        k_Ca_cyt_to_extra - 1st-order rate constant for calcium extrusion from
+            the cytosol to the extracellular space.
+        k_Ca_extra_to_cyt - 1st-order rate constant for calcium influx from the
+            extracellular space to the cytosol.
+    """
+    # Cytosolic Ca2+ regulation
+
+    # cytosol to extracellular space
+    # From previous model fittings we get around 4 1/s.
+    Parameter("k_Ca_cyt_to_extra", 5e-2)  # 1/s
+    alias_model_components()
+    # # free Ca2+ in the extracellular space
+    Observable("_cytCa", Ca(b=None) ** CYTOSOL)
+    alias_model_components()
+    Expression("_k_Ca_cyt_to_extra", k_Ca_cyt_to_extra * (_cytCa - Ca_C_0) / _cytCa)
+    alias_model_components()
+    # cytosol to extracellular space
+    Rule(
+        "Ca_cyt_to_extra",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** EXTRACELLULAR,
+        _k_Ca_cyt_to_extra,
+    )
+
+    return
+
+
+def calcium_cytosol_er_flux_single():
+    """Defines reactions control flux of Ca2+ from the cytosol and ER lumen.
+
+    This function defines two first order reactions to control transfer of Ca2+
+    from the cytosol (back) to the ER lumen and its transfer from the ER lumen
+    space into the cytosol. This function allows reloading of ER Ca2+ store
+    after release. We assume that at steady-state in the abscence of agonist the
+    extrusion and influx are balanced to maintain the resting cyctosolic
+    concentration of free Ca2+.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+V_ERL
+        2. Ca2+_ERL ---> Ca2+_CYTO
+
+    Adds 2 parameters.
+
+    Parameters:
+        k_Ca_cyt_to_er - 1st-order rate constant for calcium transfer from
+            the cytosol to the ER lumen.
+        k_Ca_er_to_cyt - 1st-order rate constant for calcium transfer from the
+            ER lumen to the cytosol.
+    """
+    # Cytosolic Ca2+ regulation
+
+    # cytosol to ER lumen
+    # Parameter("k_Ca_cyt_to_er", 2)  # 1/s
+    # alias_model_components()
+    # ER lumen to cytosol
+    # As a first estimate assume that the initial concentration of cytosolic
+    # Ca2+ is its equilibrium value before any agonist is added and the rate out
+    # of the cytosol equals the rate in. However, note that this doesn't take
+    # into account any other reactions that can change the cytosolic calcium
+    # concentration such as equlibration of Ca2+ buffer binding.
+    Parameter("k_Ca_er_to_cyt", 1e-3)
+    # alias_model_components()
+    # The Ca2+ in the ER Lumen
+    Observable("_erCa", Ca(b=None) ** ER_LUMEN)
+    alias_model_components()
+    Expression("_k_Ca_er_to_cyt", k_Ca_er_to_cyt * (_erCa - Ca_E_0) / _erCa)
+    alias_model_components()
+
+    # cytosol to ER lumen
+    # Rule(
+    #     "Ca_cyt_to_er",
+    #     Ca(b=None) ** CYTOSOL >> Ca(b=None) ** ER_LUMEN,
+    #     k_Ca_cyt_to_er,
+    # )
+    # ER lumen to cytosol.
+    Rule(
+        "Ca_er_to_cyt",
+        Ca(b=None) ** ER_LUMEN >> Ca(b=None) ** CYTOSOL,
+        _k_Ca_er_to_cyt,
+    )
+    return
 
 def regulation_of_cytosolic_calcium_concentration():
     """Reactions to regulate the concentration of free cytosolic calcium.
@@ -720,8 +820,8 @@ def regulation_of_cytosolic_calcium_concentration():
     """
 
     cytosolic_calcium_buffering()
-    calcium_extrusion_and_influx()
-    calcium_cytosol_er_flux()
+    calcium_extrusion_and_influx_single()
+    #calcium_cytosol_er_flux()
     return
 
 
