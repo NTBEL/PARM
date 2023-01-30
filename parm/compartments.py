@@ -241,7 +241,7 @@ def hek293_cell():
     # 13.9 +- 0.1 micron in suspension as per Mateus et al. 2013 https://doi.org/10.1021/mp4000822
     diameter_cell = 13.9  # micron
     radius_cell = 0.5 * diameter_cell  # micron
-    V_cell = (4 / 3) * np.pi * diameter_cell ** 3 * units.cubicmicron_to_pL  # pL
+    V_cell = (4 / 3) * np.pi * radius_cell ** 3 * units.cubicmicron_to_pL  # pL
     # The nucleus of HEK293 cells is quite large. I don't have an exact
     # volume fraction for the cytosol, but using a rough estimation from the
     # IHC images the cytosol is only about 30-50% of the cell volume.
