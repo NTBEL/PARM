@@ -272,7 +272,7 @@ def single_state_par2_activation():
     # Since 2AT has EC50 = 101.8 nM in Hek 293 cells its probably safe to
     # assume that the Kd for 2AT is somewhere between those two compounds.
     # 142 nM = (430-38)/(296-16) *101.5
-    Parameter("Kd_PAR2_bind_TAT", 142 * units.nM_to_molec_per_pL * Vcyto.value)
+    Parameter("Kd_PAR2_bind_TAT", 142 * units.nM_to_molec_per_pL * Vextra.value)
     alias_model_components()
     # Division by V_EXTRA is take into account the compartment scaling for kf.
     Expression("kr_PAR2_bind_TAT", Kd_PAR2_bind_TAT * kf_PAR2_bind_TAT / V_EXTRA)
