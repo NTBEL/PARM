@@ -119,25 +119,25 @@ def calcium_signal_initials():
     # Endogenous PLCB1 concentration: 3/micrometer^2
     # Overexpressed PLCB1 concentration: 3,000/micrometer^2
     # PLC total endogenous: 10/micrometer^2
-    Parameter("PLC_0", 3 * SAcell.value)
+    Parameter("PLC_0", 10 * SAcell.value)
     # PIP2
     # Basal no. of PIP2 molecules is 49997 as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
     # also free PIP2 of 5000 per micrometer^2 used by Falkenburger et al. 2013 https://doi.org/10.1085/jgp.201210887
-    # For nominal value will start with Lemon et al. value.
-    Parameter("PIP2_0", 49997)
+    Parameter("PIP2_0", 5000 * SAcell.value)
     # Assume there is no IP3 or DAG initially.
     Parameter("IP3_0", 0)
     Parameter("DAG_0", 0)
     # IP3R
     # Set nominal as 1/micrometer^2
-    Parameter("IP3R_0", 1 * SAcell.value)
+    Parameter("IP3R_0", 1 * SAer.value)
     # ER Ca2+ store
     # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
-    # around 525 microM as reported in
+    # around around 530 +- 70 uM.
     # Foyouzi-Youssefi et al. https://doi.org/10.1073/pnas.97.11.5723 (Fig. 3C, control)
-    Parameter("Ca_E_0", 525 * units.microM_to_molec_per_pL * Ver.value)
+    Parameter("Ca_E_0", 530 * units.microM_to_molec_per_pL * Ver.value)
     # Initial concentration of Ca2+ in the cytosol expected to be around 100 nM.
-    Parameter("Ca_C_0", 100 * units.nM_to_molec_per_pL * Vcyto.value)
+    # 97 +- 5 nM from Tong et al. JBC 1999
+    Parameter("Ca_C_0", 97 * units.nM_to_molec_per_pL * Vcyto.value)
     # In MH experiments the extracellular space is filled with ACSF with 3.1 mM
     # CaCl2, so extracellular Ca2+ should be around 3.1 mM.
     # Kang et al. https://doi.org/10.1021/acsnano.9b01993
@@ -705,6 +705,7 @@ def calcium_cytosol_er_flux_mk():
     )
     return
 
+
 def calcium_extrusion_and_influx_single():
     """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
 
@@ -806,6 +807,7 @@ def calcium_cytosol_er_flux_single():
     )
     return
 
+
 def regulation_of_cytosolic_calcium_concentration():
     """Reactions to regulate the concentration of free cytosolic calcium.
 
@@ -821,7 +823,7 @@ def regulation_of_cytosolic_calcium_concentration():
 
     cytosolic_calcium_buffering()
     calcium_extrusion_and_influx_single()
-    #calcium_cytosol_er_flux()
+    # calcium_cytosol_er_flux()
     return
 
 
@@ -1026,6 +1028,22 @@ def cytosolic_calcium_feedback():
     return
 
 
+def cytosolic_calcium_positive_feedback():
+    """Defines feedback from cytosolic Ca2+ on IP3 production.
+
+    This function wraps the mechanism for positive feedback on IP3 production
+    by Ca2+ binding to PLC.
+
+    Calls:
+        * calcium_binds_plc_and_enhances_pip2_hydrolysis
+        * cytosolic_calcium_inhibits_ip3r
+
+    """
+    # Positive feedback on hydrolysis of PIP2.
+    calcium_binds_plc_and_enhances_pip2_hydrolysis()
+    return
+
+
 def gaq_activated_calcium_signaling():
     """Combines mechanistic elements to define the full calcium signaling pathway.
 
@@ -1072,7 +1090,8 @@ def gaq_activated_calcium_signaling_simplified():
     plc_binds_gaq_and_catalyzes_pip2_to_ip3()
     ip3_binds_ip3r()
     ip3r_transports_er_calcium_to_cytosol()
-    calcium_extrusion_and_influx()
+    cytosolic_calcium_positive_feedback()
+    calcium_extrusion_and_influx_single()
     ip3_degradation()
     return
 
@@ -1181,10 +1200,11 @@ def observables():
     # Bound cytosolic calcium.
     Observable("bound_cytoCa", Ca(b=ANY) ** CYTOSOL)
     # Buffered caclcium.
-    try:
-        Observable("buffered_cytoCa", CalciumBuffer(b=ANY) ** CYTOSOL)
-    except:
-        pass
+    # try:
+    #     cba = kf_Ca_bind_buffer.value
+    #     Observable("buffered_cytoCa", CalciumBuffer(b=ANY) ** CYTOSOL)
+    # except:
+    #     pass
     # Calcium bound PLC
     Observable("PLC_Ca", PLC(bca=ANY))
 
