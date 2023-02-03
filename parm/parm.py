@@ -3,7 +3,7 @@ from pysb import (
     Model,
 )
 
-from . import compartments, receptor_modules, gprotein_modules, calcium_modules
+from parm import compartments, receptor_modules, gprotein_modules, calcium_modules
 
 
 Model()
@@ -11,28 +11,27 @@ Model()
 # Define the comparments and their volumes.
 compartments.hek293_cell()
 
-# PAR2 activation.
-# Minimal two-state model of activation.
-# 2AT + PAR2_I <---> TAT:PAR2_I <---> TAT:PAR2_A
-receptor_modules.minimal_two_state_par2_activation()
+
+# PAR2 activation using single-state model of activation:
+#   2AT + PAR2_I <---> TAT:PAR2_A
+receptor_modules.single_state_par2_activation()
 
 # Receptor degradation:
-#  i) bound and inactive PAR2:
-#     TAT:PAR2_I ---> None
-# ii) bound and active PAR2:
-#     TAT:PAR2_A ---> None
+#   TAT:PAR2_A ---> None
 receptor_modules.occupied_par2_degradation()
 
-# Gprotein activation using a classic (non-precoupled) mechanism:
-gprotein_modules.classic_activation_mechanism()
-
-# Gprotein signal regulation
-# a) Slow hydrolosis by Gaq alone
-#    Gaq:GTP ---> Gaq:GDP
-# b) RGS enhanced hydrolosis
-#    Gaq:GTP + RGS <---> Gaq:GTP:RGS ---> Gaq:GDP + RGS
-gprotein_modules.gaq_hydrolyzes_gtp_to_gdp()
-gprotein_modules.rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp()
+# Gprotein activation and regulation using the heterotrimeric G protein cycle
+# mechanism:
+#  i) G protein activation:
+#   2AT:PAR2_A + Gaq:GDP:Gbg ---> 2AT:PAR2_A + Gaq:GTP + Gbg
+#  ii) GTP hydrolosis:
+#       a) (slow) hydrolosis by Gaq alone:
+#           Gaq:GTP ---> Gaq:GDP
+#       b) RGS enhanced hydrolosis:
+#           Gaq:GTP --RGS--> Gaq:GDP
+#  iii) heterotrimer reassociation:
+#   Gaq:GDP + Gbg ---> Gaq:GDP:Gbq
+gprotein_modules.yi2003_heterotrimeric_gprotein_cycle()
 
 
 # Calcium signaling via PLC and IP3 that leads to release of the ER calcium
