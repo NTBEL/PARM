@@ -8,9 +8,11 @@ from parm import units
 
 
 def expand_times(times, expand_by=100):
-    tsp = np.linspace(0, times.max(), expand_by)
-    tsp = np.concatenate((tsp, times[1:-1]))
-    tsp.sort()
+    # tsp = np.linspace(0, times.max(), expand_by)
+    # tsp = np.concatenate((tsp, times[1:-1]))
+    # tsp.sort()
+    tmax = np.max(times) + 5
+    tsp = np.arange(tmax)
     findex = list()
     for time in times:
         idx = np.where(tsp == time)[0][0]
