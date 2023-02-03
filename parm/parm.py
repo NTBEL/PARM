@@ -37,7 +37,7 @@ gprotein_modules.rgs_enhances_gaq_hydrolosis_of_gtp_to_gdp()
 
 # Calcium signaling via PLC and IP3 that leads to release of the ER calcium
 # store.
-calcium_modules.gaq_activated_calcium_signaling()
+calcium_modules.gaq_activated_calcium_signaling_simplified()
 # PLC enhances Gaq's hydrolosis of GTP.
 gprotein_modules.addon_plc_enhances_gaq_hydrolosis_of_gtp_to_gdp()
 
