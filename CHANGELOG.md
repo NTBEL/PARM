@@ -1,3 +1,19 @@
+## v0.2.0 - 2023-02-05
+
+Note: merging in from branch `model-variant/extrusion-inlflux-single`
+
+### Changed
+* Moved the `parm.parm` model to `parm.variants.classic`. This model also uses `gaq_activated_calcium_signaling_simplified` now instead of `gaq_activated_calcium_signaling`.
+* Moved the `parm.variants.heterogprot_cycle` model to be `parm.parm`, so that this model is now the main model. This model also uses `gaq_activated_calcium_signaling_simplified` now instead of `gaq_activated_calcium_signaling`.
+* The `calcium_modules.gaq_activated_calcium_signaling_simplified` module-function was updated to use the `calcium_extrusion_and_influx_single` along with the `cytosolic_calcium_positive_feedback`.
+* The `util.expand_times` function no longer uses `np.linspace` but instead just uses `np.arange` to make time points at 1 second intervals. This works with the experimental time points because they are all whole number times.
+
+
+### Added
+* Created new `calcium_modules.calcium_extrusion_and_influx_single` module-function that defines a single 1st order reaction to pump excess Ca2+ from the cytosol.
+* Created new `calcium_modules.cytosolic_calcium_positive_feedback` module-function that just defines the positive feedback of Ca2+ on PLC catalysis of PIP2 to IP3.  
+* New `parm.variants.LR` model variant that just defines ligand-receptor binding using the `receptor_modules.single_state_par2_activation` module-function. This model can be used to test the binding/dissociation.
+
 ## v0.1.0 - 2022-10-27
 
 ### Changed
