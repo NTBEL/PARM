@@ -4,8 +4,8 @@
 ![Python version badge](https://img.shields.io/badge/python-3.8-blue.svg)
 [![PySB version badge](https://img.shields.io/badge/PySB->%3D1.13.2-9cf.svg)](https://pysb.org/)
 [![license](https://img.shields.io/github/license/NTBEL/PARM.svg)](LICENSE)
-![version](https://img.shields.io/badge/version-0.1.0-orange.svg)
-[![release](https://img.shields.io/github/release-pre/NTBEL/PARM.svg)](https://github.com/NTBEL/PARM/releases/tag/v0.1.0)
+![version](https://img.shields.io/badge/version-0.2.0-orange.svg)
+[![release](https://img.shields.io/github/release-pre/NTBEL/PARM.svg)](https://github.com/NTBEL/PARM/releases/tag/v0.2.0)
 
 **P**AR2 **A**ctivation and calcium signaling **R**eaction **M**odel (PARM)
 
@@ -43,28 +43,28 @@ Note that `parm` has the following core dependency:
 
 First, install [PySB](https://pysb.org/download).
 
-You can then install `parm` version 0.1.0 with `pip` sourced from the GitHub repo:
+You can then install `parm` version 0.2.0 with `pip` sourced from the GitHub repo:
 
 ##### with git installed:
 
 Fresh install:
 ```
-pip install git+https://github.com/NTBEL/PARM@v0.1.0
+pip install git+https://github.com/NTBEL/PARM@v0.2.0
 ```
 Or to upgrade from an older version:
 ```
-pip install --upgrade git+https://github.com/NTBEL/PARM@v0.1.0
+pip install --upgrade git+https://github.com/NTBEL/PARM@v0.2.0
 ```
 
 ##### without git installed:
 
 Fresh install:
 ```
-pip install https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.1.0.zip
+pip install https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.2.0.zip
 ```
 Or to upgrade from an older version:
 ```
-pip install --upgrade https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.1.0.zip
+pip install --upgrade https://github.com/NTBEL/diffusion-fit/archive/refs/tags/v0.2.0.zip
 ```
 
 ### Manual install
@@ -105,10 +105,11 @@ The core model of PARM is defined in `parm.parm` and can be imported at the pack
   * `parm.antagonist.noncompetitive` - Adds a noncompetitive antagonist which operates via negative allosteric modulation of the agonist binding affinity. (Note: The factor
     which controls the allosteric modulation could also be set such that the antagonist induces positive allosteric modulation, increasing agonist binding affinity.)
 
-There are also 3 models with mechanistic variations defined in `parm.variants`:
+There are also 4 models with mechanistic variations defined in `parm.variants`:
   * `parm.variants.precoupled` - Adds pre-coupling between PAR2 and the G-protein heterotrimer such that some PAR2 can bind to the heterotrimer under resting conditions (without any agonist).
-  * `parm.variants.heterogprot_cycle` - The receptor binding and G-protein interaction mechanism is adapted from the yeast G-protein cycle model of [Yi et al. 2003](https://doi.org/10.1073/pnas.1834247100).
+  * `parm.variants.classic` - The receptor binding and G-protein interaction mechanism is based on a classic activation mechanism without pre-coupling.
   * `parm.variants.par2_synthesis_degradation` - This model only contains PAR2 with reactions for its resting synthesis and degradation.
+  * `parm.variants.LR` - This model only contains the ligand-receptor binding with concerted activation.
 
 ### Example usage
 
@@ -171,4 +172,4 @@ If you need assistance with PySB-specific issues then you can also try the pysb 
 # Citing
 
 If this model or other package features are useful in your research and you wish to cite it, you can use the following software citation:
-> B. A. Wilson, “PARM: PAR2 Activation and calcium signaling Reaction Model” (v0.1.0), https://github.com/NTBEL/PARM, 2022.
+> B. A. Wilson, “PARM: PAR2 Activation and calcium signaling Reaction Model” (v0.2.0), https://github.com/NTBEL/PARM, 2022.
