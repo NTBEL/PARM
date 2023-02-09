@@ -5,7 +5,7 @@ import setuptools
 
 setuptools.setup(
     name="parm",
-    version="0.2.0",
+    version="0.3.0",
     python_requires=">=3.8",
     install_requires=["pysb>=1.13.2"],
     extras_require={"cython": "cython>=0.29.25"},
