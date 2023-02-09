@@ -237,7 +237,7 @@ def load_pydream_chains(
     """Loads parameter samples from PyDREAM chains and concatenates them into a single 2D array."""
 
     chains = list()
-    if burin is None:
+    if burnin is None:
         burnin = int(niter / 2)
     for i in range(nchains):
         fname = "{}_dreamzs_{}chains_sampled_params_chain_{}_{}.npy".format(
