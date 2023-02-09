@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pysb
 from pysb.simulator import ScipyOdeSimulator
@@ -224,3 +225,26 @@ def set_tat_initial_nM(
     v_extra = param_values[vextra_mask]
     param_values[twoat_mask] = tat_conc_nM * units.nM_to_molec_per_pL * v_extra
     return param_values
+
+
+def load_pydream_chains(
+    niter: int,
+    nchains: int,
+    fpath="./pydream_results",
+    model="parm",
+    burnin=None,
+) -> np.array:
+    """Loads parameter samples from PyDREAM chains and concatenates them into a single 2D array."""
+
+    chains = list()
+    if burin is None:
+        burnin = int(niter / 2)
+    for i in range(nchains):
+        fname = "{}_dreamzs_{}chains_sampled_params_chain_{}_{}.npy".format(
+            model, nchains, i, niter
+        )
+        fname = os.path.join(fpath, fname)
+        chain = np.load(os.path.abspath(fname))
+        chains.append(chain[burnin:])
+
+    return np.concatenate(chains)
