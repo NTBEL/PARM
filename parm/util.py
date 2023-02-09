@@ -232,6 +232,7 @@ def load_pydream_chains(
     nchains: int,
     fpath="./pydream_results",
     model="parm",
+    dream_type="dreamzs",
     burnin=None,
 ) -> np.array:
     """Loads parameter samples from PyDREAM chains and concatenates them into a single 2D array."""
@@ -240,8 +241,8 @@ def load_pydream_chains(
     if burnin is None:
         burnin = int(niter / 2)
     for i in range(nchains):
-        fname = "{}_dreamzs_{}chains_sampled_params_chain_{}_{}.npy".format(
-            model, nchains, i, niter
+        fname = "{}_{}_{}chains_sampled_params_chain_{}_{}.npy".format(
+            model, dream_type, nchains, i, niter
         )
         fname = os.path.join(fpath, fname)
         chain = np.load(os.path.abspath(fname))
