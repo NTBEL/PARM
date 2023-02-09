@@ -25,6 +25,7 @@ def run_model(
     tspan: np.ndarray,
     param_values: typing.Union[None, np.ndarray, typing.List[np.ndarray]] = None,
     initials: typing.Union[None, np.ndarray, typing.List[np.ndarray]] = None,
+    nprocs: int = 1,
 ) -> np.ndarray:
     """Run the given model using ScipyOdeSimulator.
 
@@ -50,11 +51,11 @@ def run_model(
     solver = ScipyOdeSimulator(
         model,
         tspan=tspan,
-        param_values=param_values,
-        initials=initials,
         integrator="lsoda",
     )
-    m_run = solver.run()
+    m_run = solver.run(
+        param_values=param_values, initials=initials, num_processors=nprocs
+    )
     yout = m_run.all
     return yout
 
