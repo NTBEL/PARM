@@ -1,3 +1,13 @@
+## v0.3.0 - 2023-02-09
+
+### Changed
+* `util.run_model` has an input parameter `nprocs` that is passed to the solver's `run` function as `num_processors` to allow for parallel execution of the inputs if multiple parameter sets or initial conditions are provided. 
+
+### Added
+* `util.load_pydream_chains` function that can load the sampled parameter vectors output from PyDREAM sampling chains.
+* `visualize.display_expcomp_single` function that takes in a single parameter vector, simulates the model at various 2AT concentrations, and plots a comparison with the experimental FRET ratio data.
+* `visualize.display_expcomp_multi_grid_mean_ci` function that takes in a list/array of parameter vectors, simulates the model at various 2AT concentrations for each parameter vector, and plots a comparison with the experimental FRET ratio data with a 2x3 grid of plots for each of the 6 2AT concentrations. The function plots the mean and standard deviation over all the input parameter vectors for a given 2AT concentration.
+
 ## v0.2.0 - 2023-02-05
 
 Note: merging in from branch `model-variant/extrusion-inlflux-single`
