@@ -363,8 +363,8 @@ def ip3r_transports_er_calcium_to_cytosol():
     Parameter("kf_erCa_bind_IP3R", K_CA_BIND)
     Parameter("kr_erCa_bind_IP3R", defaults.KR_BIND)
     # Effective IP3R channel permeability as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
-    # is 525 1/s
-    Parameter("k_tranport_erCa", 525)
+    # is 575 1/s
+    Parameter("k_tranport_erCa", 575)
     alias_model_components()
     # Transport of Ca2+ by activated IP3R
     #  ER -> cytosol:
