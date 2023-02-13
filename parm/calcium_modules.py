@@ -371,34 +371,18 @@ def ip3r_transports_er_calcium_to_cytosol():
     #    IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
     Rule(
         "bind_Ca_IPR3_er",
-        IP3R(b1=1, b2=2, b3=3, b4=4, bcaer=None, bcacyt=None) ** ER_MEMB
-        % IP3(b=1) ** CYTOSOL
-        % IP3(b=2) ** CYTOSOL
-        % IP3(b=3) ** CYTOSOL
-        % IP3(b=4) ** CYTOSOL
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=None) ** ER_MEMB
         + Ca(b=None) ** ER_LUMEN
-        | IP3R(b1=1, b2=2, b3=3, b4=4, bcaer=5, bcacyt=None) ** ER_MEMB
-        % IP3(b=1) ** CYTOSOL
-        % IP3(b=2) ** CYTOSOL
-        % IP3(b=3) ** CYTOSOL
-        % IP3(b=4) ** CYTOSOL
+        | IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=None) ** ER_MEMB
         % Ca(b=5) ** ER_LUMEN,
         kf_erCa_bind_IP3R,
         kr_erCa_bind_IP3R,
     )
     Rule(
         "transport_Ca_ER_CYTO",
-        IP3R(b1=1, b2=2, b3=3, b4=4, bcaer=5, bcacyt=None) ** ER_MEMB
-        % IP3(b=1) ** CYTOSOL
-        % IP3(b=2) ** CYTOSOL
-        % IP3(b=3) ** CYTOSOL
-        % IP3(b=4) ** CYTOSOL
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=None) ** ER_MEMB
         % Ca(b=5) ** ER_LUMEN
-        >> IP3R(b1=1, b2=2, b3=3, b4=4, bcaer=None, bcacyt=None) ** ER_MEMB
-        % IP3(b=1) ** CYTOSOL
-        % IP3(b=2) ** CYTOSOL
-        % IP3(b=3) ** CYTOSOL
-        % IP3(b=4) ** CYTOSOL
+        >> IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=None) ** ER_MEMB
         + Ca(b=None) ** CYTOSOL,
         k_tranport_erCa,
     )
@@ -751,6 +735,109 @@ def calcium_extrusion_and_influx_single():
 
     return
 
+def calcium_extrusion_and_influx_single_o2():
+    """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
+
+    This function defines two first order reactions to control extrusion of Ca2+
+    from the cytosol to the extracellular space and its influx from the
+    extracellular space into the cytosol. This is based on the decay in the Ca2+
+    FRET signal seen in Figure S3C of Kang et al. 2019
+    (https://doi.org/10.1021/acsnano.9b01993) which we assume is primarily due
+    to first-order excretion/extrusion of excess Ca2+ from the released ER store
+    into the extracellular space by cell membrane ion channels. We assume that
+    at steady-state in the abscence of agonist the extrusion and influx are
+    balanced to maintain the resting cyctosolic concentration of free Ca2+.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+_EXTRA
+        2. Ca2+_EXTRA ---> Ca2+_CYTO
+
+    Adds 2 parameters.
+
+    Parameters:
+        k_Ca_cyt_to_extra - 1st-order rate constant for calcium extrusion from
+            the cytosol to the extracellular space.
+        k_Ca_extra_to_cyt - 1st-order rate constant for calcium influx from the
+            extracellular space to the cytosol.
+    """
+    # Cytosolic Ca2+ regulation
+
+    # cytosol to extracellular space
+    # From previous model fittings we get around 4 1/s.
+    Parameter("k_Ca_cyt_to_extra", 5e-2)  # 1/s
+    alias_model_components()
+    # # free Ca2+ in the extracellular space
+    Observable("_cytCa", Ca(b=None) ** CYTOSOL)
+    alias_model_components()
+    Expression("_k_Ca_cyt_to_extra", k_Ca_cyt_to_extra * (_cytCa - Ca_C_0)**2 / _cytCa)
+    alias_model_components()
+    # cytosol to extracellular space
+    Rule(
+        "Ca_cyt_to_extra",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** EXTRACELLULAR,
+        _k_Ca_cyt_to_extra,
+    )
+
+    return
+
+def calcium_extrusion_and_influx_single_mk():
+    """Defines reactions control extrusion and influx of Ca2+ from the cytosol and extracellular space.
+
+    This function defines two first order reactions with rate constant
+    expressions that yield  Michaelis-Menten kinetics to control extrusion of
+    Ca2+ from the cytosol to the extracellular space and its influx from the
+    extracellular space into the cytosol. This is based on the decay in the Ca2+
+    FRET signal seen in Figure S3C of Kang et al. 2019
+    (https://doi.org/10.1021/acsnano.9b01993) which we assume is largely due to
+    first-order excretion/extrusion of excess Ca2+ from the released ER store
+    into the extracellular space by cell membrane ion channels. We assume that
+    at steady-state in the abscence of agonist the extrusion and influx should
+    be balanced to maintain the resting cyctosolic concentration of free Ca2+, but
+    this must enforced when training model.
+
+    Reactions:
+        1. Ca2+_CYTO ---> Ca2+_EXTRA
+        2. Ca2+_EXTRA ---> Ca2+_CYTO
+
+    Adds 4 parameters and two expressions.
+
+    Parameters:
+        Vmax_Ca_cyt_to_extra
+        Km_Ca_cyt_to_extra
+        Vmax_Ca_extra_to_cyt
+        Km_Ca_extra_to_cyt
+
+    Expressions:
+        k_Ca_cyt_to_extra - 1st-order rate constant for calcium extrusion from
+            the cytosol to the extracellular space.
+
+    """
+
+    alias_model_components()
+    # cytosol to extracellular space
+    # Set a nominal max rate of 20 uM/s.
+    Parameter("Vmax_Ca_cyt_to_extra", 20 * units.nM_to_molec_per_pL * Vcyto.value)
+    # Nominal value of 1 uM.
+    Parameter("Km_Ca_cyt_to_extra", 1. * units.microM_to_molec_per_pL * Vcyto.value)
+    Parameter("n_Ca_cyt_to_extra", 2)
+    alias_model_components()
+    # Some 'private' observables to monitor the ER and cytoslic calcium for
+    # Michaelis-Menten rate.
+    Observable("_Ca_cyt", Ca(b=None) ** CYTOSOL)
+    alias_model_components()
+    # First order rate constants based on MK rate.
+    Expression(
+        "k_Ca_cyt_to_extra",
+        (Vmax_Ca_cyt_to_extra * (_cytCa - Ca_C_0)**(n_Ca_cyt_to_extra-1)) / (_(Ca_cyt - Ca_C_0)**n_Ca_cyt_to_extra + Km_Ca_cyt_to_extra**n_Ca_cyt_to_extra),
+    )  # 1/s
+    alias_model_components()
+    # cytosol to extracellular space
+    Rule(
+        "Ca_cyt_to_extra",
+        Ca(b=None) ** CYTOSOL >> Ca(b=None) ** EXTRACELLULAR,
+        k_Ca_cyt_to_extra,
+    )
+    return
 
 def calcium_cytosol_er_flux_single():
     """Defines reactions control flux of Ca2+ from the cytosol and ER lumen.
@@ -806,6 +893,7 @@ def calcium_cytosol_er_flux_single():
         _k_Ca_er_to_cyt,
     )
     return
+
 
 
 def regulation_of_cytosolic_calcium_concentration():
@@ -1091,7 +1179,7 @@ def gaq_activated_calcium_signaling_simplified():
     ip3_binds_ip3r()
     ip3r_transports_er_calcium_to_cytosol()
     cytosolic_calcium_positive_feedback()
-    calcium_extrusion_and_influx_single()
+    calcium_extrusion_and_influx_single_o2()
     ip3_degradation()
     return
 
