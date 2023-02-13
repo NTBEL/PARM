@@ -828,7 +828,7 @@ def calcium_extrusion_and_influx_single_mk():
     # First order rate constants based on MK rate.
     Expression(
         "k_Ca_cyt_to_extra",
-        (Vmax_Ca_cyt_to_extra * (_Ca_cyt - Ca_C_0)**(n_Ca_cyt_to_extra-1)) / (_Ca_cyt *(_Ca_cyt - Ca_C_0)**n_Ca_cyt_to_extra + Km_Ca_cyt_to_extra**n_Ca_cyt_to_extra),
+        (Vmax_Ca_cyt_to_extra * (_Ca_cyt - Ca_C_0)**n_Ca_cyt_to_extra) / (_Ca_cyt *(_Ca_cyt - Ca_C_0)**n_Ca_cyt_to_extra + Km_Ca_cyt_to_extra**n_Ca_cyt_to_extra),
     )  # 1/s
     alias_model_components()
     # cytosol to extracellular space
