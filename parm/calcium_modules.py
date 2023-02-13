@@ -1179,7 +1179,7 @@ def gaq_activated_calcium_signaling_simplified():
     ip3_binds_ip3r()
     ip3r_transports_er_calcium_to_cytosol()
     cytosolic_calcium_positive_feedback()
-    calcium_extrusion_and_influx_single_mk()
+    calcium_extrusion_and_influx_single()
     ip3_degradation()
     return
 
