@@ -250,3 +250,26 @@ def load_pydream_chains(
         chains.append(chain[burnin:])
 
     return np.concatenate(chains)
+
+def load_pydream_likelihoods(
+    niter: int,
+    nchains: int,
+    fpath="./pydream_results",
+    model="parm",
+    dream_type="dreamzs",
+    burnin=None,
+) -> np.array:
+    """Loads parameter samples from PyDREAM chains and concatenates them into a single 2D array."""
+
+    chains = list()
+    if burnin is None:
+        burnin = int(niter / 2)
+    for i in range(nchains):
+        fname = "{}_{}_{}chains_logps_chain_{}_{}.npy".format(
+            model, dream_type, nchains, i, niter
+        )
+        fname = os.path.join(fpath, fname)
+        chain = np.load(os.path.abspath(fname))
+        chains.append(chain[burnin:])
+
+    return np.concatenate(chains)
