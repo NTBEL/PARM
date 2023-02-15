@@ -227,16 +227,16 @@ def set_tat_initial_nM(
     param_values[twoat_mask] = tat_conc_nM * units.nM_to_molec_per_pL * v_extra
     return param_values
 
-def reduce_par2(
+def scale_parameter(
     param_values: np.array,
-    fraction: float,
+    factor: float,
     idx: int = 0,
 ) -> np.array:
     """Returns an updated parameter vector with the desired 2AT initial concentration."""
 
 
-    par2_0 = param_values[idx]
-    param_values[idx] = par2_0 * fraction 
+    param_0 = param_values[idx]
+    param_values[idx] = param_0 * fraction 
     return param_values
   
 
