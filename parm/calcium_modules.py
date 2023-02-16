@@ -272,28 +272,28 @@ def ip3_binds_ip3r():
     # between subunit binding.
     #   IP3R + IP3 <---> IP3R:IP3, subunit 1
     bind(
-        IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
+        IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=WILD) ** ER_MEMB,
         "b1",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=None, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
+        IP3R(b1=ANY, b2=None, b3=None, b4=None, bcaer=None, bcacyt=WILD) ** ER_MEMB,
         "b2",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=ANY, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
+        IP3R(b1=ANY, b2=ANY, b3=None, b4=None, bcaer=None, bcacyt=WILD) ** ER_MEMB,
         "b3",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=None, bcaer=None, bcacyt=WILD) ** ER_MEMB,
         "b4",
         IP3(b=None) ** CYTOSOL,
         "b",
@@ -364,25 +364,25 @@ def ip3r_transports_er_calcium_to_cytosol():
     Parameter("kr_erCa_bind_IP3R", defaults.KR_BIND)
     # Effective IP3R channel permeability as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
     # is 575 1/s
-    Parameter("k_tranport_erCa", 575)
+    Parameter("k_tranport_erCa", 525)
     alias_model_components()
     # Transport of Ca2+ by activated IP3R
     #  ER -> cytosol:
     #    IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
     Rule(
         "bind_Ca_IPR3_er",
-        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=None) ** ER_MEMB
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=WILD) ** ER_MEMB
         + Ca(b=None) ** ER_LUMEN
-        | IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=None) ** ER_MEMB
+        | IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=WILD) ** ER_MEMB
         % Ca(b=5) ** ER_LUMEN,
         kf_erCa_bind_IP3R,
         kr_erCa_bind_IP3R,
     )
     Rule(
         "transport_Ca_ER_CYTO",
-        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=None) ** ER_MEMB
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=WILD) ** ER_MEMB
         % Ca(b=5) ** ER_LUMEN
-        >> IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=None) ** ER_MEMB
+        >> IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=WILD) ** ER_MEMB
         + Ca(b=None) ** CYTOSOL,
         k_tranport_erCa,
     )
