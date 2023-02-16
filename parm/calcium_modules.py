@@ -1115,7 +1115,7 @@ def cytosolic_calcium_enhances_ip3r_calcium_transports():
     Expression("kr_cytCa_bind_IP3R", kf_cytCa_bind_IP3R * Kd_cytCa_bind_IP3R / V_C)
     alias_model_components()
     bind(
-        IP3R(b1=WILD, b2=WILD, b3=WILD, b4=WILD, bcaer=WILD, bcacyt=None) ** ER_MEMB,
+        IP3R(b1=WILD, b2=WILD, b3=WILD, b4=WILD, bcaer=None, bcacyt=None) ** ER_MEMB,
         "bcacyt",
         Ca(b=None) ** CYTOSOL,
         "b",
