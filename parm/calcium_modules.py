@@ -272,28 +272,28 @@ def ip3_binds_ip3r():
     # between subunit binding.
     #   IP3R + IP3 <---> IP3R:IP3, subunit 1
     bind(
-        IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB,
+        IP3R(b1=None, b2=None, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
         "b1",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB,
+        IP3R(b1=ANY, b2=None, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
         "b2",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=ANY, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB,
+        IP3R(b1=ANY, b2=ANY, b3=None, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
         "b3",
         IP3(b=None) ** CYTOSOL,
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
     bind(
-        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB,
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=None, bcaer=WILD, bcacyt=WILD) ** ER_MEMB,
         "b4",
         IP3(b=None) ** CYTOSOL,
         "b",
@@ -1097,6 +1097,43 @@ def cytosolic_calcium_inhibits_ip3r():
     )
     return
 
+def cytosolic_calcium_enhances_ip3r_calcium_transports():
+    alias_model_components()
+    # As a first estimate for the forward binding reactions of Ca2+ we will assume
+    # that it is diffusion-controlled following Smoluchowski eqn.:
+    #     kf = 4*pi*D*R_o
+    # We will assume R_o is 2 nm and that D = D_Ca2+.
+    # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
+    D_Ca = 5.3e-6  # cm^2/s
+    R_o = 2e-7  # cm
+    # (1e-3) term is for unit conversion from cm^3/(s*molecule) to 1/s*molecule*L
+    # mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
+    K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcyto.value * 1e-12)
+    Parameter("kf_cytCa_bind_IP3R", K_CA_BIND)
+    Parameter("Kd_cytCa_bind_IP3R", 10.0 * units.microM_to_molec_per_pL * Vcyto.value)
+    alias_model_components()
+    Expression("kr_cytCa_bind_IP3R", kf_cytCa_bind_IP3R * Kd_cytCa_bind_IP3R / V_C)
+    alias_model_components()
+    bind(
+        IP3R(b1=WILD, b2=WILD, b3=WILD, b4=WILD, bcaer=WILD, bcacyt=None) ** ER_MEMB,
+        "bcacyt",
+        Ca(b=None) ** CYTOSOL,
+        "b",
+        [kf_cytCa_bind_IP3R, kr_cytCa_bind_IP3R],
+    )
+    # Effective IP3R channel permeability as per Lemon et al. 2003 https://doi.org/10.1016/S0022-5193(03)00079-1
+    # is 575 1/s
+    Parameter("k_tranport_erCa_Ca", 575*10)
+    alias_model_components()
+    Rule(
+        "transport_Ca_ER_CYTO_Ca",
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=5, bcacyt=ANY) ** ER_MEMB
+        % Ca(b=5) ** ER_LUMEN
+        >> IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=ANY) ** ER_MEMB
+        + Ca(b=None) ** CYTOSOL,
+        k_tranport_erCa_Ca,
+    )
+    return
 
 def cytosolic_calcium_feedback():
     """Defines feedback from cytosolic Ca2+ on IP3 production and IP3R opening.
@@ -1129,6 +1166,7 @@ def cytosolic_calcium_positive_feedback():
     """
     # Positive feedback on hydrolysis of PIP2.
     calcium_binds_plc_and_enhances_pip2_hydrolysis()
+    cytosolic_calcium_enhances_ip3r_calcium_transports()
     return
 
 
