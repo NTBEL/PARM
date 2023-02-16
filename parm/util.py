@@ -285,3 +285,18 @@ def load_pydream_likelihoods(
         chains.append(chain[burnin:])
 
     return np.concatenate(chains)
+
+def load_pso_multi_chains(
+    nchains: int,
+    fpath="./",
+) -> np.array:
+    """Loads parameter samples from PyDREAM chains and concatenates them into a single 2D array."""
+
+    chains = list()
+    for i in range(nchains):
+        fname = "pso_best_chain_{}.npy".format(i)
+        fname = os.path.join(fpath, fname)
+        chain = np.load(os.path.abspath(fname))
+        chains.append(chain)
+
+    return np.array(chains)    

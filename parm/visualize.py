@@ -73,16 +73,16 @@ def kang2019_fig_s3d():
 def display_expcomp_single(
     model: pysb.Model,
     position: np.array,
-    idxs_mask: list,
     nprocs: int = 1,
     save: bool = False,
     ):
     """Runs the model and plots a comparison with the experimental data for 2AT response."""
 
-    Y = 10 ** position
-    param_values = np.array([param.value for param in model.parameters])
+    #Y = 10 ** position
+    #param_values = np.array([param.value for param in model.parameters])
     twoat_mask = [param.name == "TAT_0" for param in model.parameters]
-    param_values[idxs_mask] = Y
+    #param_values[idxs_mask] = Y
+    param_values = position
     # Experimental data is in PARM/exp_data
     exp_data = data.training_data()
     times = exp_data["Time"]
@@ -102,8 +102,7 @@ def display_expcomp_single(
 
 def display_expcomp_multi_grid_mean_ci(
     model: pysb.Model,
-    positions: typing.Union[np.ndarray, typing.List[np.ndarray]],
-    idxs_mask: list,
+    param_vectors: typing.Union[np.ndarray, typing.List[np.ndarray]],
     counts: typing.Union[None, np.ndarray] = None,
     nprocs: int = 1,
     save: bool = False,
@@ -111,21 +110,22 @@ def display_expcomp_multi_grid_mean_ci(
     """Runs the model and plots a comparison with the experimental data for 2AT response."""
 
 
-    param_values = np.array([param.value for param in model.parameters])
+    #param_values = np.array([param.value for param in model.parameters])
     twoat_mask = [param.name == "TAT_0" for param in model.parameters]
 
     # Experimental data is in PARM/exp_data
     exp_data = data.training_data()
     times = exp_data["Time"]
     tspan, fidx = util.expand_times(times)
-    if counts is None:
-        counts = np.array([1]*len(positions))
+
     f, axes = plt.subplots(2, 3, figsize=(7, 4), sharex=True, sharey=True)
-    new_positions = list()
-    for position in positions:
-        Y = 10 ** position
-        param_values[idxs_mask] = Y
-        new_positions.append(param_values.copy())
+    new_positions = param_vectors
+    # for position in positions:
+    #     #Y = 10 ** position
+    #     #param_values[idxs_mask] = Y
+    #     new_positions.append(position.copy())
+    if counts is None:
+        counts = np.array([1]*len(new_positions))        
     for i, key in enumerate(EXP_2AT_CONCS.keys()):
         tat_number = EXP_2AT_CONCS[key] * units.nM_to_molec_per_pL * model.parameters["Vextra"].value
         for position in new_positions:
@@ -223,8 +223,7 @@ def plot_marginal_dists(
 
 def display_dose_response_comparison(
     model: pysb.Model,
-    positions: typing.Union[np.ndarray, typing.List[np.ndarray]],
-    idxs_mask: list,
+    param_vectors: typing.Union[np.ndarray, typing.List[np.ndarray]],
     counts: typing.Union[None, np.ndarray] = None,
     nprocs: int = 1,
     save: bool = False,
@@ -232,20 +231,23 @@ def display_dose_response_comparison(
     """Runs the model and plots a comparison with the experimental data for 2AT response."""
 
 
-    param_values = np.array([param.value for param in model.parameters])
+    #param_values = np.array([param.value for param in model.parameters])
     twoat_mask = [param.name == "TAT_0" for param in model.parameters]
 
     # Experimental data is in PARM/exp_data
     exp_data = data.training_data()
     times = exp_data["Time"]
     tspan, fidx = util.expand_times(times)
-    if counts is None:
-        counts = np.array([1]*len(positions))
+       
     new_positions = list()
-    for position in positions:
-        Y = 10 ** position
-        param_values[idxs_mask] = Y
-        new_positions.append(param_values.copy())
+    # for position in param_vectors:
+    #     #Y = 10 ** position
+    #     #param_values[idxs_mask] = Y
+    #     new_positions.append(position.copy())
+    new_positions = param_vectors
+    if counts is None:
+        counts = np.array([1]*len(new_positions))
+        print(len(param_vectors), len(new_positions), len(counts))     
     #dr_exp = data.kang2019_fig_s3d()
     kang2019_fig_s3d()
     dr_sim = list()    
@@ -258,6 +260,7 @@ def display_dose_response_comparison(
         for s in sim_out:
             fret_sims.append(s["FRET"])
         fret_sims = np.array(fret_sims)
+        #print(fret_sims.shape, len(counts))
         fret_mean = np.average(fret_sims, axis=0, weights=counts)
         fret_std = np.sqrt(
             np.average(np.subtract(fret_sims, fret_mean) ** 2, axis=0, weights=counts)
