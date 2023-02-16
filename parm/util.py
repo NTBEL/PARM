@@ -236,7 +236,7 @@ def scale_parameter(
 
 
     param_0 = param_values[idx]
-    param_values[idx] = param_0 * fraction 
+    param_values[idx] = param_0 * factor 
     return param_values
   
 
