@@ -271,7 +271,7 @@ def ip3_binds_ip3r():
     # Also note Kd for IP3 of binding to IP3R of 794 nM reported by
     # Rossi et al. 2021, Cell Reports 37 https://doi.org/10.1016/j.celrep.2021.109932
     Kd = 794 * units.nM_to_molec_per_pL * Vcyto.value
-    kr = Kd * kf_IP3_bind_IP3R.value / V_CYTO
+    kr = Kd * kf_IP3_bind_IP3R.value
     Parameter("kr_IP3_bind_IP3R", kr)  # 
     alias_model_components()
 
