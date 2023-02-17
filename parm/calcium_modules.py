@@ -1166,7 +1166,7 @@ def cytosolic_calcium_positive_feedback():
     """
     # Positive feedback on hydrolysis of PIP2.
     calcium_binds_plc_and_enhances_pip2_hydrolysis()
-    cytosolic_calcium_enhances_ip3r_calcium_transports()
+    #cytosolic_calcium_enhances_ip3r_calcium_transports()
     return
 
 
