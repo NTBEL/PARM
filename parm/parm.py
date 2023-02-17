@@ -15,7 +15,7 @@ compartments.hek293_cell()
 # PAR2 activation using single-state model of activation:
 #   2AT + PAR2_I <---> TAT:PAR2_A
 receptor_modules.single_state_par2_activation()
-
+receptor_modules.tat_delay()
 # Receptor degradation:
 #   TAT:PAR2_A ---> None
 receptor_modules.occupied_par2_degradation()

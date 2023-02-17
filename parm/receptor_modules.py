@@ -613,6 +613,30 @@ def addon_single_state_precoupled_par2_activation():
 
     return
 
+def tat_delay():
+    """Adds a diffusion-like delay in the available 2AT.
+
+    Adds one monomer and 2 parameters.
+
+    Monomers:
+        * TATpre - PAR2-agonist 2AT in a pre-state that cannot yet bind PAR2.
+    Parameters:
+        * TATpre_0 - amount of the pre form 2AT. Should replace setting TAT_0 to
+            a non-zero value.
+        * k_tatpre_to_tat - 2nd-order rate constant for the conversion of 2AT.
+
+    """
+    alias_model_components()
+    Monomer("TATpre")
+    Parameter("TATpre_0", TAT_0.value)
+    TAT_0.value = 0
+    alias_model_components()
+    Initial(TATpre() ** EXTRACELLULAR, TATpre_0)
+    Parameter("k_tatpre_to_tat", 1e-6) # 1/ (molec s)
+    alias_model_components()
+    Rule("tatpre_to_tat", TATpre() ** EXTRACELLULAR + TATpre() ** EXTRACELLULAR >> TAT(b=None) ** EXTRACELLULAR + TAT(b=None) ** EXTRACELLULAR, k_tatpre_to_tat)
+    Observable("preTAT", TATpre())
+    return
 
 def observables():
     """Defines observables for the receptor states.
