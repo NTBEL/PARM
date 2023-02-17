@@ -128,8 +128,9 @@ def calcium_signal_initials():
     Parameter("IP3_0", 0)
     Parameter("DAG_0", 0)
     # IP3R
-    # Set nominal as 1/micrometer^2
-    Parameter("IP3R_0", 1 * SAer.value)
+    # wild-type HEK cell: 9101 +- 934
+    # Rossi et al. 2021, Cell Reports 37 https://doi.org/10.1016/j.celrep.2021.109932
+    Parameter("IP3R_0", 9101)
     # ER Ca2+ store
     # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
     # around around 530 +- 70 uM.
@@ -265,9 +266,16 @@ def ip3_binds_ip3r():
     # Assume the IP3 binding rate is diffusion-controlled by IP3 diffusion
     K_IP3_BIND = 4 * np.pi * D_ip3 * R_o * (1e-3) / (Vcyto.value * 1e-12)
     Parameter("kf_IP3_bind_IP3R", K_IP3_BIND)  # Diffusion controlled.
-    Parameter("kr_IP3_bind_IP3R", 2.2)  # Nomimal value from Flaherty et al.
     alias_model_components()
-    # Binding of IP3 to IP3R
+    # Nominal value of kr from Flaherty et al. is 2.2 1/s.
+    # Also note Kd for IP3 of binding to IP3R of 794 nM reported by
+    # Rossi et al. 2021, Cell Reports 37 https://doi.org/10.1016/j.celrep.2021.109932
+    Kd = 794 * units.nM_to_molec_per_pL * Vcyto.value
+    kr = Kd * kf_IP3_bind_IP3R.value / V_CYTO
+    Parameter("kr_IP3_bind_IP3R", kr)  # 
+    alias_model_components()
+
+    
     # Assume subunits are bound sequentially and that there is no cooperativity
     # between subunit binding.
     #   IP3R + IP3 <---> IP3R:IP3, subunit 1
