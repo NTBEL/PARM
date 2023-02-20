@@ -210,7 +210,7 @@ def plc_binds_gaq_and_catalyzes_pip2_to_ip3():
     # binding to PLC and that enhances the catalysis rate which is similar to
     # how Keizer and De Young (Biophys J. 61:549-660 1992) implement
     # calcium feedback on IP3 production.
-    Parameter("kcat_PIP2_to_IP3", (22.85 + 27.89) / 4)
+    Parameter("kcat_PIP2_to_IP3", 27.89)
     alias_model_components()
     # PLC activation by binding Gaq:
     #    Gaq_A + PLC <---> Gaq_A:PLC
@@ -963,7 +963,8 @@ def calcium_binds_plc_and_enhances_pip2_hydrolysis():
     # catalytic rate:
     #   PLCb4 22.85 1/s
     #   PLCb3 27.89 1/s
-    Parameter("kcat_PIP2_to_IP3_Ca", (22.85 + 27.89) / 2)
+    Parameter("kcat_PIP2_to_IP3_Ca", 27.89)
+    kcat_PIP2_to_IP3.value /= 100.
     alias_model_components()
     Expression(
         "ef_ca_pip2_to_ip3", kcat_PIP2_to_IP3_Ca / kcat_PIP2_to_IP3
