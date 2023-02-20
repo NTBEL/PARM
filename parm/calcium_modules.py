@@ -274,7 +274,9 @@ def ip3_binds_ip3r():
     # Rossi et al. 2021, Cell Reports 37 https://doi.org/10.1016/j.celrep.2021.109932
     # Kd noted as 119 nM in Taylor and Konieczny 2016,
     #  Sci. Signal. https://doi.org/10.1126%2Fscisignal.aaf6029  
-    Kd = 119 * units.nM_to_molec_per_pL * Vcyto.value
+    # Kd reported as 31.3 nM for IP3R pocket (IBC) and 337 nM for the IP3R tail region (NT)
+    # at 303.3 K in Ding et al. 2010, Mol Pharmacol 77  https://doi.org/10.1124%2Fmol.109.062596
+    Kd = 31.3 * units.nM_to_molec_per_pL * Vcyto.value
     kr = Kd * kf_IP3_bind_IP3R.value
     Parameter("kr_IP3_bind_IP3R", kr)  # 
     alias_model_components()
@@ -311,48 +313,7 @@ def ip3_binds_ip3r():
         "b",
         [kf_IP3_bind_IP3R, kr_IP3_bind_IP3R],
     )
-    # #   IP3R + IP3 <---> IP3R:IP3, subunit 2
-    # Rule(
-    #     "bind_IP3_IPR3_sub2",
-    #     IP3R(b1=1, b2=None, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     + IP3(b=None) ** CYTOSOL
-    #     | IP3R(b1=1, b2=2, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     % IP3(b=2) ** CYTOSOL,
-    #     kf_IP3_bind_IP3R,
-    #     kr_IP3_bind_IP3R,
-    # )
-    #   IP3R + IP3 <---> IP3R:IP3, subunit 3
-    # Rule(
-    #     "bind_IP3_IPR3_sub3",
-    #     IP3R(b1=1, b2=2, b3=None, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     % IP3(b=2) ** CYTOSOL
-    #     + IP3(b=None) ** CYTOSOL
-    #     | IP3R(b1=1, b2=2, b3=3, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     % IP3(b=2) ** CYTOSOL
-    #     % IP3(b=3) ** CYTOSOL,
-    #     kf_IP3_bind_IP3R,
-    #     kr_IP3_bind_IP3R,
-    # )
-    # #   IP3R + IP3 <---> IP3R:IP3, subunit 4
-    # Rule(
-    #     "bind_IP3_IPR3_sub4",
-    #     IP3R(b1=1, b2=2, b3=3, b4=None, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     % IP3(b=2) ** CYTOSOL
-    #     % IP3(b=3) ** CYTOSOL
-    #     + IP3(b=None) ** CYTOSOL
-    #     | IP3R(b1=1, b2=2, b3=3, b4=4, bcaer=None, bcacyt=None) ** ER_MEMB
-    #     % IP3(b=1) ** CYTOSOL
-    #     % IP3(b=2) ** CYTOSOL
-    #     % IP3(b=3) ** CYTOSOL
-    #     % IP3(b=4) ** CYTOSOL,
-    #     kf_IP3_bind_IP3R,
-    #     kr_IP3_bind_IP3R,
-    # )
+
     return
 
 
