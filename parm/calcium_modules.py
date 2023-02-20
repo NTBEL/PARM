@@ -128,8 +128,10 @@ def calcium_signal_initials():
     Parameter("IP3_0", 0)
     Parameter("DAG_0", 0)
     # IP3R
-    # wild-type HEK cell: 9101 +- 934
     # Rossi et al. 2021, Cell Reports 37 https://doi.org/10.1016/j.celrep.2021.109932
+    #   wild-type HEK cell: 9101 +- 934 (Note: only given under the simulation section)
+    # Tovey et al. 2008, J Cell Biol 183 https://doi.org/10.1083%2Fjcb.200803172
+    # HEK cells : ∼3,300 homotetrameric IP3R2
     Parameter("IP3R_0", 9101)
     # ER Ca2+ store
     # ER lumen of HEK-293 cells has between roughly 400-600 microM with an average
@@ -398,6 +400,39 @@ def ip3r_transports_er_calcium_to_cytosol():
     )
     return
 
+def ip3r_transports_er_calcium_to_cytosol_single_step():
+    alias_model_components()
+    # Assume IP3R is only open when all 4 subunits are bound by IP3 and that
+    # it only flows ER-->Cytosol
+    # Transport of Ca2+
+    #  ER -> cytosol:
+    # As a first estimate for the forward binding reactions of Ca2+ we will assume
+    # that it is diffusion-controlled following Smoluchowski eqn.:
+    #     kf = 4*pi*D*R_o
+    # We will assume R_o is 1 nm and that D = D_Ca2+.
+    # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
+    D_Ca = 5.3e-6  # cm^2/s
+    # smallest value Myxicola axoplasm, al-Baldwai and Abercrombie https://doi.org/10.1016/0143-4160(95)90088-8
+    #   D_Ca: 0.1e-6 # cm^2/s -
+    R_o = 1e-7  # cm
+    # (1e-3) term is for unit conversion from cm^3/(s*molecule) to 1/s*molecule*L
+    # mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
+    K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcyto.value * 1e-12)
+    Parameter("kf_erCa_bind_IP3R", K_CA_BIND) # Assume the ER is more tortuous than cytoplasm.
+    alias_model_components()
+    # Transport of Ca2+ by activated IP3R
+    #  ER -> cytosol:
+    #    IP3R:IP3_4 + Ca_E <---> Ca_E:IP3R:IP3_4 ---> Ca_C + IP3R:IP3_4
+    Rule(
+        "bind_transport_Ca_IPR3_er",
+        IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=WILD) ** ER_MEMB
+        + Ca(b=None) ** ER_LUMEN
+        >> IP3R(b1=ANY, b2=ANY, b3=ANY, b4=ANY, bcaer=None, bcacyt=WILD) ** ER_MEMB
+        + Ca(b=None) ** CYTOSOL,
+        kf_erCa_bind_IP3R,
+    )
+
+    return
 
 def ip3_degradation():
     """1st order degradation of IP3.
@@ -1225,8 +1260,7 @@ def gaq_activated_calcium_signaling_simplified():
     calcium_signal_initials()
     plc_binds_gaq_and_catalyzes_pip2_to_ip3()
     ip3_binds_ip3r()
-    ip3r_transports_er_calcium_to_cytosol()
-    cytosolic_calcium_positive_feedback()
+    ip3r_transports_er_calcium_to_cytosol_single_step()
     calcium_extrusion_and_influx_single()
     ip3_degradation()
     return
