@@ -1061,7 +1061,7 @@ def cytosolic_calcium_inhibits_ip3r():
     # We will assume R_o is 2 nm and that D = D_Ca2+.
     # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
     D_Ca = 5.3e-6  # cm^2/s
-    R_o = 2e-7  # cm
+    R_o = 1e-7  # cm
     # (1e-3) term is for unit conversion from cm^3/(s*molecule) to 1/s*molecule*L
     # mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
     K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcyto.value * 1e-12)
@@ -1112,7 +1112,7 @@ def cytosolic_calcium_enhances_ip3r_calcium_transports():
     # We will assume R_o is 2 nm and that D = D_Ca2+.
     # The diffusion coefficient of Ca2+ is 5.3 x 10^-6 cm^2/s; https://doi.org/10.1016/0143-4160(87)90027-3
     D_Ca = 5.3e-6  # cm^2/s
-    R_o = 2e-7  # cm
+    R_o = 1e-7  # cm
     # (1e-3) term is for unit conversion from cm^3/(s*molecule) to 1/s*molecule*L
     # mL/s*molecule -> 10^-3 L/(s*molecule) and dividing by V converts to 1/(s*molecule/cell)
     K_CA_BIND = 4 * np.pi * D_Ca * R_o * (1e-3) / (Vcyto.value * 1e-12)
