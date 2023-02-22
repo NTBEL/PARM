@@ -3,7 +3,7 @@ from pysb import (
     Model,
 )
 
-from . import compartments, receptor_modules, gprotein_modules, calcium_modules
+from parm import compartments, receptor_modules, gprotein_modules, calcium_modules
 
 
 Model()
