@@ -613,6 +613,38 @@ def addon_single_state_precoupled_par2_activation():
 
     return
 
+def addon_single_state_precoupled_par2_activation_catalytic():
+    """Adds activation of PAR2 precoupled to G-protein to the single state receptor activation mechanism.
+    This addon function uses the G-protein heterotrimer so must be called after
+    the G-protein mechanism modules. It adds one additional rule for concerted
+    2AT binding and activation of Gprotein by the precoupled receptor:
+        TAT + PAR2_I:Gaq:GDP:Gbg ---> TAT:PAR2_A + Gaq:GTP + Gbg
+
+    Adds no additional parameters or expressions.
+    """
+    alias_model_components()
+    # Alias the pre-coupled PAR2-Gprotein complex
+    PAR2_i_Gaq_gdp_Gbg = (
+        PAR2(state="I", bortho=None, ballo=None, bgaq=2) ** CELL_MEMB
+        % Gaq(bpar=2, bgdp=3, bgbg=4) ** CELL_MEMB
+        % GDP(b=3) ** CELL_MEMB
+        % Gbg(b=4) ** CELL_MEMB
+    )
+    # Alias the TAT:PAR2 complexes
+    tat_PAR2_a = (
+        TAT(b=1) ** EXTRACELLULAR
+        % PAR2(state="A", bortho=1, ballo=None, bgaq=None) ** CELL_MEMB
+    )
+    # Alias the complex Gaq:GTP
+    Gaq_gtp = Gaq(bpar=None, bgdp=3, bgbg=None) ** CELL_MEMB % GTP(b=3) ** CELL_MEMB
+    Rule(
+        "tat_bind_PAR2_pre",
+        TAT(b=None) ** EXTRACELLULAR + PAR2_i_Gaq_gdp_Gbg >> tat_PAR2_a + Gaq_gtp + Gbg(b=None) ** CELL_MEMB,
+        kf_PAR2_bind_TAT
+    )
+
+    return
+
 def tat_delay():
     """Adds a diffusion-like delay in the available 2AT.
 
