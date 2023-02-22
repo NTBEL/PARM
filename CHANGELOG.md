@@ -2,12 +2,16 @@
 
 ### Changed
 * `util.run_model` has an input parameter `nprocs` that is passed to the solver's `run` function as `num_processors` to allow for parallel execution of the inputs if multiple parameter sets or initial conditions are provided. 
+* Moved `parm.variants.classic` to `parm.variants.twostate.classic`.
+* Moved the existing `parm.variants.precoupled` to `parm.variants.twostate.precoupled`.
 
 ### Added
 * `util.load_pydream_chains` function that can load the sampled parameter vectors output from PyDREAM sampling chains.
 * `visualize.display_expcomp_single` function that takes in a single parameter vector, simulates the model at various 2AT concentrations, and plots a comparison with the experimental FRET ratio data.
 * `visualize.display_expcomp_multi_grid_mean_ci` function that takes in a list/array of parameter vectors, simulates the model at various 2AT concentrations for each parameter vector, and plots a comparison with the experimental FRET ratio data with a 2x3 grid of plots for each of the 6 2AT concentrations. The function plots the mean and standard deviation over all the input parameter vectors for a given 2AT concentration.
 * `calcium_modules.cytosolic_calcium_enhances_ip3r_calcium_transports` function that adds binding of cytosolic calcium to IP3R in the bcacyt position and enhancement of the IP3R transport of er Ca2+ to the cytosol.
+* `receptor_modules.addon_single_state_precoupled_par2_activation_catalytic` function that adds a single step binding of 2AT and activation of PAR2 and Gprotein.
+* Created a new `parm.variants.precoupled` model derived from the updated main model.
 
 ### Fixed
 * `calcium_modules.ip3r_transports_er_calcium_to_cytosol` - Corrected the value for the effective IP3R channel permeability cited from Lemon et al. to 575 1/s (it was set as 525 1/s). 
