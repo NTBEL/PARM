@@ -156,8 +156,8 @@ def default_cell():
     # The following BNGL examples use 1000x the cell volume:
     #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
     #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
-    # We'll use 10 time the cytosolic volume
-    Parameter("Vextra", Vcyto.value * 10)
+    # We'll use 1000x the cytosolic volume as in the BNGL examples.
+    Parameter("Vextra", Vcyto.value * 1000)
     # Volume of the ER lumen/cisternal space.
     # It is often >10% of cell volume according to
     # Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .
@@ -264,8 +264,8 @@ def hek293_cell():
     # The following BNGL examples use 1000x the cell volume:
     #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LRR_comp.bngl
     #   https://github.com/RuleWorld/BNGTutorial/blob/master/CBNGL/LR_comp.bngl
-    # We'll use 10 time the cytosolic volume
-    Parameter("Vextra", Vcyto.value * 10)
+    # We'll use 1000x the cytosolic volume as in the BNGL examples.
+    Parameter("Vextra", Vcyto.value * 1000)
     # Volume of the ER lumen/cisternal space.
     # It is often >10% of cell volume according to
     # Alberts et al. https://www.ncbi.nlm.nih.gov/books/NBK26841/ .

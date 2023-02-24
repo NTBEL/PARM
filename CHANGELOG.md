@@ -1,3 +1,8 @@
+## dev - 2023-02-24
+
+### Changed
+* In `parm.compartments` updated the extracellular volume to be 1000x the cell volume.
+
 ## v0.3.0 - 2023-02-09
 
 ### Changed
