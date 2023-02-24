@@ -4,6 +4,7 @@
 * `util.run_model` has an input parameter `nprocs` that is passed to the solver's `run` function as `num_processors` to allow for parallel execution of the inputs if multiple parameter sets or initial conditions are provided. 
 * Moved `parm.variants.classic` to `parm.variants.twostate.classic`.
 * Moved the existing `parm.variants.precoupled` to `parm.variants.twostate.precoupled`.
+* `parm.receptor_modules` updated the extracellular volume to be 1000x the cell volume like the BNGL examples.
 
 ### Added
 * `util.load_pydream_chains` function that can load the sampled parameter vectors output from PyDREAM sampling chains.
